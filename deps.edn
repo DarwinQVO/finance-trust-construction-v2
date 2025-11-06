@@ -7,7 +7,7 @@
         ;; Validation: Using Spec.alpha (official Clojure, not Malli)
         ;; Removed malli - redundant with spec.alpha, creates confusion
         metosin/spec-tools {:mvn/version "0.10.6"}
-        clojure.java-time {:mvn/version "1.4.2"}
+        clojure.java-time/clojure.java-time {:mvn/version "1.4.2"}
 
         ;; CSV/JSON parsing
         org.clojure/data.csv {:mvn/version "1.0.1"}
@@ -15,6 +15,19 @@
 
         ;; Datomic - Immutable database with time-travel
         com.datomic/datomic-free {:mvn/version "0.9.5697"}
+
+        ;; REST API - Ring + Reitit (Phase 1) - Java 8 compatible versions
+        ring/ring-core {:mvn/version "1.9.6"}
+        ring/ring-jetty-adapter {:mvn/version "1.9.6"}
+        metosin/reitit {:mvn/version "0.7.0"}
+        metosin/reitit-ring {:mvn/version "0.7.0"}
+        metosin/reitit-middleware {:mvn/version "0.7.0"}
+        metosin/muuntaja {:mvn/version "0.6.8"}           ; EDN/Transit/JSON
+        ring-cors/ring-cors {:mvn/version "0.1.13"}       ; CORS support
+        clj-http/clj-http {:mvn/version "3.12.3"}         ; HTTP client (→ Python)
+
+        ;; Logging
+        com.taoensso/timbre {:mvn/version "6.3.1"}        ; Structured logging
 
         ;; Visualization & Development
         djblue/portal {:mvn/version "0.56.0"}
