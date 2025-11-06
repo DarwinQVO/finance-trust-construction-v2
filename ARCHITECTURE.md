@@ -101,6 +101,247 @@ Response:
 
 ---
 
+## 🏭 Rich Hickey's "Systems as Machines" Pattern
+
+**Source:** [Simple Made Easy](https://www.infoq.com/presentations/Simple-Made-Easy/) & Systems thinking
+
+### The Core Insight
+
+> "Don't build systems as **objects that call each other to change state**. Build them as **machines where values flow through transformations**."
+
+### The 4 Service Types (And ONLY 4)
+
+Every service in our system does ONE of these:
+
+#### 1. TRANSFORM (Pure Function at Service Scale)
+```python
+# ✅ CORRECT: Python ML Service
+@app.post("/classify")
+def classify_merchant(tx: Transaction) -> Classification:
+    # Receives VALUE (immutable transaction data)
+    result = ml_model.predict(tx.description)
+    # Returns NEW VALUE (classification)
+    return Classification(
+        merchant=result.merchant,
+        confidence=result.confidence,
+        model_version="gpt-4-2024"
+    )
+    # NO state changed, NO database modified
+    # PURE transformation: value → new value
+```
+
+```clojure
+;; ✅ CORRECT: Clojure API Handler
+(defn list-transactions-handler [{:keys [conn query-params]}]
+  (let [raw-txs (query-datomic conn)
+        pipeline (build-response-pipeline query-params)
+        result (into [] pipeline raw-txs)]  ; ← TRANSFORM
+    {:status 200 :body {:transactions result}}))
+    ;; Receives request VALUE → Returns response VALUE
+    ;; NO mutation, NO side effects (except READ from DB)
+```
+
+**Key:** Service receives value, transforms it, returns new value. Like a function.
+
+---
+
+#### 2. MOVE (Transport Data)
+```clojure
+;; ✅ CORRECT: core.async channels (Phase 3)
+(let [tx-channel (async/chan 100)]
+  ;; Channel ONLY moves values from A to B
+  ;; It doesn't transform, decide, or remember
+  (async/>!! tx-channel transaction)
+  (async/<!! tx-channel))
+  ;; Pure transportation
+```
+
+**Key:** Like a conveyor belt. Just moves, doesn't change.
+
+---
+
+#### 3. ROUTE (Make Decisions)
+```clojure
+;; ✅ CORRECT: Reitit Router
+["/api/v1"
+ ["/transactions" {:get list-transactions-handler}]
+ ["/classify" {:post proxy-to-python-handler}]]
+
+;; Or custom routing logic:
+(defn route-for-classification [tx]
+  (if (needs-ml? tx)
+    (send-to-python-service tx)
+    (use-rule-based-classifier tx)))
+```
+
+**Key:** Decides WHERE values go, doesn't change the values.
+
+---
+
+#### 4. REMEMBER (Store for Future)
+```clojure
+;; ✅ CORRECT: Datomic (append-only)
+(d/transact conn [{:transaction/amount 100
+                   :transaction/merchant "STARBUCKS"}])
+;; Stores VALUE, doesn't modify existing data
+;; Immutable, append-only log
+
+;; ✅ CORRECT: Event sourcing
+(store-event! {:event/type :transaction-classified
+               :event/tx-id tx-id
+               :event/classification result
+               :event/timestamp (now)})
+```
+
+**Key:** Write values to durable storage. Never UPDATE, only APPEND.
+
+---
+
+### ❌ ANTI-PATTERN: "Revenge of Objects"
+
+**DANGER ZONE - What NOT to do:**
+
+```python
+# ❌ WRONG: Service modifies another service's state
+@app.post("/classify")
+def classify_merchant(tx_id: str):
+    # Calls Clojure API to CHANGE state
+    clojure_api.update_transaction(tx_id, {
+        "merchant": "STARBUCKS",
+        "confidence": 0.95
+    })
+    return {"status": "updated"}
+    # This is DISTRIBUTED OBJECTS - VERY BAD!
+```
+
+```clojure
+;; ❌ WRONG: Clojure calls Python which calls back to Clojure
+(defn classify-transaction! [tx-id]
+  ;; Call Python
+  (let [result (http/post python-url {:tx-id tx-id})]
+    ;; Python internally calls BACK to Clojure to modify state
+    ;; This creates circular dependencies and state chaos
+    result))
+```
+
+**Why This is Bad:**
+- Creates "distributed object graph" (spaghetti at system scale)
+- State changes ripple unpredictably
+- Impossible to debug ("who changed what when?")
+- Can't test in isolation
+- Can't scale (tight coupling)
+
+---
+
+### ✅ CORRECT PATTERN: Value Flow
+
+**How our system WILL work (Phase 2-3):**
+
+```
+Transaction (immutable value)
+      ↓
+[1. ROUTE] Clojure API decides: "needs ML classification"
+      ↓
+[2. MOVE] core.async channel transports value to Python queue
+      ↓
+[3. TRANSFORM] Python ML receives value, transforms, returns new value
+      ↓
+[2. MOVE] core.async channel transports result back
+      ↓
+[1. ROUTE] Clojure decides: "high confidence, accept"
+      ↓
+[4. REMEMBER] Datomic appends classification to log
+      ↓
+Done. New immutable value stored.
+```
+
+**Key Properties:**
+- ✅ No service "tells" another to "do something"
+- ✅ Values flow like water through pipes
+- ✅ Each step is testable (pure function)
+- ✅ Easy to debug (trace value through pipeline)
+- ✅ Easy to scale (add more workers at any step)
+
+---
+
+### Applied to Our Architecture
+
+| Component | Role | Pattern | Example |
+|-----------|------|---------|---------|
+| **Clojure API** | TRANSFORM + ROUTE | Handler transforms request → response. Router decides which handler. | `(into [] pipeline raw-txs)` |
+| **Python ML** | TRANSFORM ONLY | Receives tx data, returns classification. NO state. | `def classify(tx) -> result` |
+| **core.async** | MOVE | Channels transport values between services. | `(async/>!! ch value)` |
+| **Datomic** | REMEMBER | Append-only storage. Never UPDATE. | `(d/transact conn [fact])` |
+| **HTTP Client** | MOVE + ROUTE | Transports requests to Python, routes errors/retries. | `(http/post url data)` |
+
+---
+
+### Phase 2 Implementation Checklist
+
+When building Python ML Service, ensure:
+
+- [ ] **Endpoints are pure functions**
+  ```python
+  @app.post("/v1/classify/merchant")
+  def classify(tx: Transaction) -> Classification:
+      # ✅ Receives value, returns value
+      # ❌ NO database writes
+      # ❌ NO calls back to Clojure API
+  ```
+
+- [ ] **No shared state between requests**
+  ```python
+  # ❌ WRONG: Global state
+  classifications_cache = {}
+
+  # ✅ CORRECT: Stateless
+  def classify(tx: Transaction) -> Classification:
+      # Each request is independent
+      # No mutable global state
+  ```
+
+- [ ] **Clojure owns persistence**
+  ```clojure
+  ;; Python ONLY transforms:
+  (let [result (http/post python-url tx-data)]
+    ;; Clojure decides what to do with result:
+    (if (> (:confidence result) 0.7)
+      (d/transact conn [result])  ; ← Clojure writes to DB
+      (log/warn "Low confidence, skipped")))
+  ```
+
+- [ ] **Services never call each other bidirectionally**
+  ```
+  ✅ CORRECT:
+  Clojure → Python (one way, async preferred)
+
+  ❌ WRONG:
+  Clojure ↔ Python (circular, creates coupling)
+  ```
+
+---
+
+### Why This Matters
+
+**Without this pattern:**
+- System becomes "distributed object graph"
+- State changes ripple unpredictably
+- Debugging nightmare ("who changed what?")
+- Can't scale (everything coupled)
+
+**With this pattern:**
+- System is like assembly line (easy to understand)
+- Each step testable in isolation
+- Easy to debug (trace value through pipeline)
+- Easy to scale (add workers at any step)
+- Easy to modify (swap out any transform)
+
+---
+
+**Remember:** If a service "asks" another service to "do something", you're building distributed objects. **STOP.** Redesign as values flowing through transformations.
+
+---
+
 ## 🔄 Transducer Patterns (Applied)
 
 ### Pattern 1: API Response Pipelines
