@@ -164,29 +164,41 @@
 ;; ============================================================================
 
 (defn registry-with-history
-  "Create a registry that automatically tracks history.
+  "DEPRECATED: Create a registry that automatically tracks history.
+
+  ⚠️  Use Datomic's native history instead: (d/history (d/db conn))
+
+  This function is redundant when using Datomic, which provides:
+  - Automatic time-travel via d/as-of
+  - Complete audit trail via d/history
+  - Zero-overhead (no manual tracking needed)
+
+  See: trust.events-datomic/history function
 
   Returns a map with:
     :current - Atom containing current state
     :history - Atom containing vector of all states
 
-  Example:
+  Example (deprecated):
     (def banks (registry-with-history))"
   []
   {:current (atom {})
    :history (atom [])})
 
 (defn- record-history!
-  "Internal: Record a snapshot in history."
+  "DEPRECATED: Internal: Record a snapshot in history.
+  Use Datomic's native history instead."
   [history-atom snapshot]
   (swap! history-atom conj
          {:timestamp (java.util.Date.)
           :state snapshot}))
 
 (defn register-with-history!
-  "Register an entity and record in history.
+  "DEPRECATED: Register an entity and record in history.
 
-  Example:
+  ⚠️  Use trust.identity-datomic/register! instead - history is automatic.
+
+  Example (deprecated):
     (register-with-history! banks :bofa {...})"
   [registry-with-history id value]
   {:pre [(s/valid? ::id id)

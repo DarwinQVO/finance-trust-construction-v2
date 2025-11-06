@@ -19,6 +19,42 @@
             [clojure.edn :as edn]))
 
 ;; ============================================================================
+;; SERIALIZATION ABSTRACTION (Decoupled from storage)
+;; ============================================================================
+
+(defn- default-serialize
+  "Default serialization: Clojure EDN (pr-str).
+
+  Can be replaced with JSON, Transit, Fressian, etc. by rebinding *serialize-fn*."
+  [data]
+  (pr-str data))
+
+(defn- default-deserialize
+  "Default deserialization: Clojure EDN (edn/read-string)."
+  [s]
+  (edn/read-string s))
+
+(def ^:dynamic *serialize-fn*
+  "Dynamic var for event serialization function.
+
+  Can be rebound to use different formats:
+  - EDN (default): pr-str
+  - JSON: (binding [*serialize-fn* json/write-str] ...)
+  - Transit: (binding [*serialize-fn* transit/write] ...)
+
+  Rationale (Rich Hickey principle):
+  - Separate mechanism (storage) from policy (format)
+  - Late binding allows format choice at runtime
+  - Dynamic vars enable temporary rebinding without code changes"
+  default-serialize)
+
+(def ^:dynamic *deserialize-fn*
+  "Dynamic var for event deserialization function.
+
+  Can be rebound to match *serialize-fn* format."
+  default-deserialize)
+
+;; ============================================================================
 ;; CONNECTION MANAGEMENT
 ;; ============================================================================
 
@@ -84,8 +120,8 @@
   ([conn event-type data metadata]
    (let [event-entity {:db/id (d/tempid :db.part/user)
                        :event/type event-type
-                       :event/data (pr-str data)  ; Store as EDN string
-                       :event/metadata (pr-str metadata)
+                       :event/data (*serialize-fn* data)  ; Pluggable serialization
+                       :event/metadata (*serialize-fn* metadata)
                        :temporal/business-time (java.util.Date.)}]
      @(d/transact conn [event-entity]))))
 

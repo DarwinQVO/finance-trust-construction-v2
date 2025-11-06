@@ -23,7 +23,8 @@
             [trust.identity-datomic :as identity]
             [trust.events-datomic :as events]
             [finance.entities :as entities])
-  (:import [java.text SimpleDateFormat]))
+  (:import [java.text SimpleDateFormat]
+           [java.security MessageDigest]))
 
 ;; ============================================================================
 ;; PARSING
@@ -44,26 +45,57 @@
             (java.util.Date.)))))))
 
 (defn parse-amount
-  "Parse amount string to double."
+  "Parse amount string to double.
+
+  ALWAYS returns POSITIVE amount (Math/abs).
+  Direction is encoded in :transaction/type, not amount polarity.
+
+  Examples:
+    (parse-amount \"-45.99\")  ; => 45.99 (positive)
+    (parse-amount \"$1,234\")  ; => 1234.0
+    (parse-amount \"invalid\") ; => 0.0 (fallback)
+
+  Rationale (Rich Hickey principle):
+  - Amount is a magnitude (always >= 0)
+  - Type (:income/:expense/:transfer) is the direction semantic
+  - Separates 'what' (amount) from 'how' (type)"
   [amount-str]
   (when amount-str
     (try
       (-> amount-str
           (clojure.string/replace #"[$,]" "")
           (Double/parseDouble)
-          Math/abs)  ; Always positive
+          Math/abs)  ; Always positive - direction comes from :type
       (catch Exception _ 0.0))))
 
 (defn normalize-type
-  "Normalize transaction type to keyword."
+  "Normalize transaction type to keyword.
+
+  Rich Hickey Principle: FAIL LOUDLY on unknown types (Bug #12 fix).
+  - NEVER silently reclassify (silent default = data corruption!)
+  - Unknown type = EXPLICIT ERROR
+  - Forces caller to handle bad data explicitly
+
+  Valid types:
+  - GASTO → :expense
+  - INGRESO → :income
+  - PAGO_TARJETA → :transfer
+  - TRASPASO → :transfer
+
+  Throws ex-info if type is unknown."
   [type-str]
   (when type-str
-    (case (.toUpperCase type-str)
-      "GASTO" :expense
-      "INGRESO" :income
-      "PAGO_TARJETA" :transfer
-      "TRASPASO" :transfer
-      :expense)))
+    (let [upper (.toUpperCase type-str)]
+      (case upper
+        "GASTO" :expense
+        "INGRESO" :income
+        "PAGO_TARJETA" :transfer
+        "TRASPASO" :transfer
+        ;; FAIL LOUDLY - no silent defaults!
+        (throw (ex-info (format "Unknown transaction type: '%s'. Expected: GASTO, INGRESO, PAGO_TARJETA, TRASPASO" type-str)
+                        {:type type-str
+                         :type-upper upper
+                         :valid-types ["GASTO" "INGRESO" "PAGO_TARJETA" "TRASPASO"]}))))))
 
 (defn normalize-bank
   "Normalize bank name to keyword."
@@ -97,6 +129,103 @@
         (.contains lower "transfer") :transfer
         :else :uncategorized))))
 
+(defn normalize-merchant
+  "Normalize merchant name to keyword, PRESERVING INFORMATION.
+
+  Extracts core merchant name from description strings:
+  - 'STARBUCKS #123' → :starbucks (known merchant)
+  - 'AMAZON PRIME VIDEO' → :amazon (known merchant)
+  - 'WHOLE FOODS MARKET' → :whole-foods-market (preserves full name!)
+  - 'UBER RIDE 45678, DES: TRIP' → :uber-ride (truncates at delimiter)
+
+  Information Preservation Principle (Rich Hickey):
+  - NEVER truncate to first word only
+  - Only remove: special delimiters (DES:, #), trailing IDs (5+ digits)
+  - Multi-word merchants preserved with hyphens
+
+  Returns :unknown-merchant if cannot extract."
+  [merchant-str]
+  (when (and merchant-str (not= merchant-str ""))
+    (let [upper (.toUpperCase (clojure.string/trim merchant-str))
+          ;; Remove special delimiters and everything after
+          cleaned (-> upper
+                     (clojure.string/split #"\s*,\s*DES:")
+                     first
+                     (clojure.string/split #"\s*PURCHASE\s*:")
+                     first
+                     (clojure.string/split #"\s*#")
+                     first
+                     (clojure.string/split #"\s*ID:")
+                     first
+                     (clojure.string/trim))
+          ;; Remove trailing numbers that look like IDs (5+ digits)
+          without-id (clojure.string/replace cleaned #"\s+\d{5,}$" "")
+          ;; Convert to keyword-friendly format
+          normalized (.toLowerCase (clojure.string/trim without-id))
+          ;; Replace spaces with hyphens for multi-word merchants
+          keyword-str (clojure.string/replace normalized #"\s+" "-")]
+      (cond
+        ;; Known merchants (exact match preferred)
+        (.contains upper "STARBUCKS") :starbucks
+        (.contains upper "AMAZON") :amazon
+        (.contains upper "UBER") :uber
+        (.contains upper "STRIPE") :stripe
+        (.contains upper "APPLE") :apple
+        (.contains upper "GOOGLE") :google
+        (.contains upper "NETFLIX") :netflix
+        (.contains upper "SPOTIFY") :spotify
+        ;; Generic: PRESERVE FULL MERCHANT NAME (fix for Bug #10)
+        (and keyword-str (> (count keyword-str) 2))
+        (keyword keyword-str)
+        :else :unknown-merchant))))
+
+(defn compute-transaction-id
+  "Compute deterministic transaction ID from stable fields.
+
+  Uses SHA-256 hash of:
+  - date (formatted as ISO string)
+  - normalized description (uppercase, trimmed)
+  - amount (rounded to 2 decimals)
+  - source-file
+  - line-number
+
+  This ensures:
+  - Same transaction imported twice = same ID
+  - Deduplication works correctly
+  - Identity derived from immutable facts (Rich Hickey principle)
+
+  Example:
+    (compute-transaction-id
+      #inst \"2024-03-20\"
+      \"STARBUCKS #123\"
+      45.99
+      \"bofa_march.csv\"
+      23)
+    ; => \"tx-a3b4c5d6e7f8...\""
+  [date description amount source-file line-number]
+  (let [;; Normalize inputs
+        date-str (when date (.format (java.text.SimpleDateFormat. "yyyy-MM-dd") date))
+        desc-normalized (-> (str description)
+                            .toUpperCase
+                            clojure.string/trim)
+        amount-rounded (format "%.2f" (double amount))
+
+        ;; Concatenate stable fields
+        stable-data (str date-str "|"
+                        desc-normalized "|"
+                        amount-rounded "|"
+                        source-file "|"
+                        line-number)
+
+        ;; Compute SHA-256 hash
+        digest (MessageDigest/getInstance "SHA-256")
+        hash-bytes (.digest digest (.getBytes stable-data "UTF-8"))
+
+        ;; Convert to hex string
+        hash-hex (apply str (map #(format "%02x" %) hash-bytes))]
+
+    (str "tx-" (subs hash-hex 0 16))))
+
 (defn parse-csv-row
   "Parse a single CSV row into transaction map.
 
@@ -118,21 +247,32 @@
   [row idx]
   (when (>= (count row) 11)  ; At least basic fields
     (let [[date desc amount-orig amount-num tx-type category merchant
-           currency account-name account-num bank source-file line-num notes] row]
-      {:id (str "tx-" (java.util.UUID/randomUUID))
-       :date (parse-date date)
-       :description (or desc "")
-       :amount (parse-amount (or amount-num amount-orig "0"))
+           currency account-name account-num bank source-file line-num notes] row
+          parsed-date (parse-date date)
+          parsed-amount (parse-amount (or amount-num amount-orig "0"))
+          parsed-desc (or desc "")
+          parsed-source (or source-file "transactions_ALL_SOURCES.csv")
+          parsed-line (if line-num
+                       (try (Integer/parseInt line-num)
+                            (catch Exception _ idx))
+                       idx)]
+      {:id (compute-transaction-id
+             parsed-date
+             parsed-desc
+             parsed-amount
+             parsed-source
+             parsed-line)
+       :date parsed-date
+       :description parsed-desc
+       :amount parsed-amount
        :type (normalize-type tx-type)
        :category-id (normalize-category category)
        :merchant (or merchant "")
+       :merchant-id (normalize-merchant (or merchant desc))
        :currency (or currency "USD")
        :bank (normalize-bank bank)
-       :source-file (or source-file "transactions_ALL_SOURCES.csv")
-       :source-line (if line-num
-                     (try (Integer/parseInt line-num)
-                          (catch Exception _ idx))
-                     idx)
+       :source-file parsed-source
+       :source-line parsed-line
        :confidence (if (and category (not= category ""))
                     0.85  ; Has category from CSV
                     0.0)})))  ; No category
@@ -182,8 +322,37 @@
                                db
                                (:category-id tx)))
 
+            ;; Get or auto-create merchant entity ID (Bug #11 fix)
+            ;; Problem: Only 9 merchants pre-registered (Starbucks, Amazon, etc.)
+            ;; Solution: Auto-create merchant entity on first encounter
+            merchant-eid (when (:merchant-id tx)
+                          (let [existing (d/q '[:find ?e .
+                                                :in $ ?id
+                                                :where [?e :entity/id ?id]]
+                                              db
+                                              (:merchant-id tx))]
+                            (if existing
+                              existing
+                              ;; Auto-create merchant entity
+                              (let [merchant-name (name (:merchant-id tx))
+                                    ;; Convert :whole-foods-market → "Whole Foods Market"
+                                    canonical-name (clojure.string/join " "
+                                                     (map clojure.string/capitalize
+                                                       (clojure.string/split merchant-name #"-")))
+                                    ;; Transact new merchant entity
+                                    result @(d/transact conn [{:entity/id (:merchant-id tx)
+                                                                :entity/canonical-name canonical-name}])
+                                    db-after (:db-after result)]
+                                ;; Query to get new entity ID
+                                (d/q '[:find ?e .
+                                       :in $ ?id
+                                       :where [?e :entity/id ?id]]
+                                     db-after
+                                     (:merchant-id tx))))))
+
             ;; Build transaction entity
-            tx-entity (cond-> {:db/id (d/tempid :db.part/user)
+            tx-tempid (d/tempid :db.part/user)
+            tx-entity (cond-> {:db/id tx-tempid
                                :transaction/id (:id tx)
                                :transaction/date (:date tx)
                                :transaction/description (:description tx)
@@ -192,6 +361,7 @@
                                :transaction/type (:type tx)
                                :transaction/source-file (:source-file tx)
                                :transaction/source-line (:source-line tx)
+                               ;; DEPRECATED: Keep for backward compat, use Classification instead
                                :transaction/confidence (:confidence tx)
                                :temporal/business-time (:date tx)}
 
@@ -199,10 +369,67 @@
                         (assoc :transaction/bank bank-eid)
 
                         category-eid
-                        (assoc :transaction/category category-eid))]
+                        (assoc :transaction/category category-eid)
 
-        @(d/transact conn [tx-entity])
+                        merchant-eid
+                        (assoc :transaction/merchant merchant-eid))
+
+            ;; Build classification entity (separates facts from inferences)
+            classification-entity {:db/id (d/tempid :db.part/user)
+                                   :classification/transaction tx-tempid
+                                   :classification/merchant-id (:merchant-id tx)
+                                   :classification/category-id (:category-id tx)
+                                   :classification/confidence (:confidence tx)
+                                   :classification/method :csv-import
+                                   :classification/timestamp (java.util.Date.)
+                                   :classification/version "import-v1.0"}]
+
+        ;; Transact both entities together
+        @(d/transact conn [tx-entity classification-entity])
         true))))
+
+(defn detect-duplicates!
+  "Detect potential duplicate transactions across different sources.
+
+  A transaction is a potential duplicate if:
+  - Date within 2 days
+  - Amount within $0.50
+  - Different source files (cross-source duplicates)
+
+  Returns: List of duplicate pairs [{:tx1 eid :tx2 eid :score 0.95} ...]
+
+  Note: This is DETECTION, not decision-making.
+  User should review and decide whether to merge or keep separate."
+  [conn]
+  (let [db (d/db conn)
+
+        ;; Get all transactions
+        all-txs (d/q '[:find ?e ?date ?amount ?source
+                       :where
+                       [?e :transaction/id]
+                       [?e :transaction/date ?date]
+                       [?e :transaction/amount ?amount]
+                       [?e :transaction/source-file ?source]]
+                     db)
+
+        ;; Find potential duplicates
+        duplicates (for [[e1 date1 amt1 src1] all-txs
+                         [e2 date2 amt2 src2] all-txs
+                         :when (and (< e1 e2)  ; Avoid comparing same or reverse pairs
+                                   (not= src1 src2)  ; Different sources
+                                   (< (Math/abs (- (.getTime date1) (.getTime date2)))
+                                      (* 2 24 60 60 1000))  ; Within 2 days
+                                   (< (Math/abs (- amt1 amt2)) 0.50))]  ; Within $0.50
+                     {:tx1 e1
+                      :tx2 e2
+                      :date-diff-days (/ (Math/abs (- (.getTime date1) (.getTime date2)))
+                                         (* 24 60 60 1000.0))
+                      :amount-diff (Math/abs (- amt1 amt2))
+                      :score (- 1.0 (* 0.3 (/ (Math/abs (- (.getTime date1) (.getTime date2)))
+                                               (* 2 24 60 60 1000.0)))
+                                    (* 0.7 (/ (Math/abs (- amt1 amt2)) 0.50)))})]
+
+    duplicates))
 
 (defn import-all!
   "Import all transactions from CSV.
@@ -308,7 +535,18 @@
        [:payment {:entity/canonical-name "Payment"
                   :category/type :transfer}]
        [:uncategorized {:entity/canonical-name "Uncategorized"
-                        :category/type :unknown}]])
+                        :category/type :unknown}]
+
+       ;; Common merchants
+       [:starbucks {:entity/canonical-name "Starbucks"}]
+       [:amazon {:entity/canonical-name "Amazon"}]
+       [:uber {:entity/canonical-name "Uber"}]
+       [:stripe {:entity/canonical-name "Stripe"}]
+       [:apple {:entity/canonical-name "Apple"}]
+       [:google {:entity/canonical-name "Google"}]
+       [:netflix {:entity/canonical-name "Netflix"}]
+       [:spotify {:entity/canonical-name "Spotify"}]
+       [:unknown-merchant {:entity/canonical-name "Unknown Merchant"}]])
 
     ;; Import data
     (println "4️⃣  Importing transactions...")
@@ -329,6 +567,18 @@
       (println "   By type:")
       (doseq [[type count] by-type]
         (println (format "     - %s: %d" (name type) count))))
+
+    ;; Duplicate detection (post-import analysis)
+    (println "\n6️⃣  Detecting potential duplicates...")
+    (let [duplicates (detect-duplicates! conn)]
+      (println (format "   Found %d potential duplicate pairs" (count duplicates)))
+      (when (seq duplicates)
+        (println "   Top 5 potential duplicates:")
+        (doseq [{:keys [tx1 tx2 score date-diff-days amount-diff]} (take 5 (sort-by :score > duplicates))]
+          (println (format "     - Tx %d ↔ Tx %d (score: %.2f, date-diff: %.1f days, amt-diff: $%.2f)"
+                          tx1 tx2 score date-diff-days amount-diff))))
+      (when (empty? duplicates)
+        (println "   ✓ No cross-source duplicates detected")))
 
     (println "\n✨ Done!\n")))
 

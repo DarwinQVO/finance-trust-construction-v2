@@ -4,7 +4,8 @@
         org.clojure/core.async {:mvn/version "1.6.681"}
 
         ;; Data processing
-        metosin/malli {:mvn/version "0.13.0"}
+        ;; Validation: Using Spec.alpha (official Clojure, not Malli)
+        ;; Removed malli - redundant with spec.alpha, creates confusion
         metosin/spec-tools {:mvn/version "0.10.6"}
         clojure.java-time {:mvn/version "1.4.2"}
 

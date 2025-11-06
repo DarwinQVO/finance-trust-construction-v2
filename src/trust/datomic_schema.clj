@@ -163,7 +163,7 @@
    {:db/ident :transaction/confidence
     :db/valueType :db.type/double
     :db/cardinality :db.cardinality/one
-    :db/doc "Classification confidence (0.0-1.0)"}
+    :db/doc "DEPRECATED: Classification confidence (0.0-1.0). Use :classification/confidence instead. Kept for backward compatibility only."}
 
    ;; Provenance
    {:db/ident :transaction/source-file
@@ -228,6 +228,57 @@
     :db/cardinality :db.cardinality/one
     :db/doc "Hex color code for UI display"}])
 
+(def classification-attributes
+  "Attributes for classification entities.
+
+  Separates FACTS (transactions) from INFERENCES (classifications).
+  Following Rich Hickey principle: Don't mix data with derived conclusions.
+
+  A Classification represents a computational decision about how to
+  categorize/label a transaction. Multiple classifications can exist
+  for the same transaction (e.g., manual override, ML inference, rule-based)."
+  [;; Reference to transaction
+   {:db/ident :classification/transaction
+    :db/valueType :db.type/ref
+    :db/cardinality :db.cardinality/one
+    :db/doc "Reference to the transaction being classified"}
+
+   ;; Classification results
+   {:db/ident :classification/merchant-id
+    :db/valueType :db.type/keyword
+    :db/cardinality :db.cardinality/one
+    :db/doc "Classified merchant keyword"}
+
+   {:db/ident :classification/category-id
+    :db/valueType :db.type/keyword
+    :db/cardinality :db.cardinality/one
+    :db/doc "Classified category keyword"}
+
+   ;; Confidence score
+   {:db/ident :classification/confidence
+    :db/valueType :db.type/double
+    :db/cardinality :db.cardinality/one
+    :db/doc "Classification confidence score (0.0-1.0)"}
+
+   ;; Classification method
+   {:db/ident :classification/method
+    :db/valueType :db.type/keyword
+    :db/cardinality :db.cardinality/one
+    :db/doc "Classification method: :manual :rule-based :ml :heuristic"}
+
+   ;; Timestamp
+   {:db/ident :classification/timestamp
+    :db/valueType :db.type/instant
+    :db/cardinality :db.cardinality/one
+    :db/index true
+    :db/doc "When this classification was created"}
+
+   ;; Optional: Rule/model version
+   {:db/ident :classification/version
+    :db/valueType :db.type/string
+    :db/cardinality :db.cardinality/one
+    :db/doc "Version of classifier that produced this (e.g., 'rule-v1.2', 'model-v3')"}])
+
 ;; ============================================================================
 ;; COMPLETE SCHEMA
 ;; ============================================================================
@@ -240,7 +291,8 @@
           transaction-attributes
           bank-attributes
           merchant-attributes
-          category-attributes))
+          category-attributes
+          classification-attributes))
 
 ;; ============================================================================
 ;; SCHEMA INSTALLATION

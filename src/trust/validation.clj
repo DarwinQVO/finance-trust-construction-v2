@@ -21,7 +21,17 @@
 ;; ============================================================================
 
 (defn validate-spec
-  "Validate data against a spec.
+  "Validate data against a spec (non-throwing).
+
+  Use this when:
+  - You want to handle errors gracefully
+  - Building error reports or UI feedback
+  - Batch validation where failures shouldn't stop processing
+
+  Use validate-spec! when:
+  - Invalid data is a bug (fast-fail)
+  - In preconditions or assertions
+  - When caller expects exceptions
 
   Args:
     spec - Spec keyword or spec definition
@@ -71,11 +81,14 @@
   (s/conform spec data))
 
 ;; ============================================================================
-;; MALLI-BASED VALIDATION
+;; MALLI-BASED VALIDATION (DEPRECATED - use Spec instead)
 ;; ============================================================================
 
 (defn validate-malli
-  "Validate data against a malli schema.
+  "DEPRECATED: Validate data against a malli schema.
+
+  ⚠️  Use validate-spec instead. Malli has been removed from dependencies.
+  See Bug #7 fix: deps.edn now only uses Spec.alpha.
 
   Args:
     schema - Malli schema (vector format)
@@ -104,9 +117,11 @@
        :errors (me/humanize (explainer data))})))
 
 (defn validate-malli!
-  "Validate data against a malli schema, throw if invalid.
+  "DEPRECATED: Validate data against a malli schema, throw if invalid.
 
-  Example:
+  ⚠️  Use validate-spec! instead. Malli has been removed from dependencies.
+
+  Example (deprecated):
     (validate-malli!
       [:map [:name string?]]
       {:name 123})
