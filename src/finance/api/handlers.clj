@@ -7,7 +7,8 @@
   3. Pipelines are composable data (testable, reusable)
   4. Context-independent (works with batch, streaming, channels)"
   (:require [datomic.api :as d]
-            [taoensso.timbre :as log]))
+            [taoensso.timbre :as log]
+            [clojure.data.json :as json]))
 
 ;; ============================================================================
 ;; Transducers: Reusable Transformation Pipelines
@@ -301,10 +302,15 @@
 ;; ============================================================================
 
 (defn not-found-handler
-  "404 handler for unknown routes."
+  "404 handler for unknown routes.
+
+  Note: Ring 1.9.6 doesn't auto-serialize maps to JSON, so we manually
+  serialize the response body using clojure.data.json."
   [request]
   (log/warn :event :route-not-found :uri (:uri request))
   {:status 404
-   :body {:error "Route not found"
-          :uri (:uri request)
-          :method (:request-method request)}})
+   :headers {"Content-Type" "application/json"}
+   :body (json/write-str
+           {:error "Route not found"
+            :uri (:uri request)
+            :method (name (:request-method request))})})
