@@ -279,6 +279,147 @@
     :db/cardinality :db.cardinality/one
     :db/doc "Version of classifier that produced this (e.g., 'rule-v1.2', 'model-v3')"}])
 
+(def review-queue-attributes
+  "Attributes for ML classification review queue (Phase 3).
+
+  Stores transactions awaiting human review of ML classifications.
+  Part of the human-in-the-loop pattern documented in ARCHITECTURE.md."
+  [;; Transaction ID reference
+   {:db/ident :review-queue/transaction-id
+    :db/valueType :db.type/string
+    :db/cardinality :db.cardinality/one
+    :db/unique :db.unique/identity
+    :db/doc "Reference to transaction ID awaiting review"}
+
+   ;; ML detection results (stored as EDN strings for flexibility)
+   {:db/ident :review-queue/transaction
+    :db/valueType :db.type/string
+    :db/cardinality :db.cardinality/one
+    :db/doc "Transaction data as EDN string"}
+
+   {:db/ident :review-queue/merchant-detection
+    :db/valueType :db.type/string
+    :db/cardinality :db.cardinality/one
+    :db/doc "Merchant detection result as EDN string"}
+
+   {:db/ident :review-queue/category-detection
+    :db/valueType :db.type/string
+    :db/cardinality :db.cardinality/one
+    :db/doc "Category detection result as EDN string"}
+
+   {:db/ident :review-queue/anomaly-detection
+    :db/valueType :db.type/string
+    :db/cardinality :db.cardinality/one
+    :db/doc "Anomaly detection result as EDN string"}
+
+   ;; Status
+   {:db/ident :review-queue/status
+    :db/valueType :db.type/keyword
+    :db/cardinality :db.cardinality/one
+    :db/index true
+    :db/doc "Review status: :pending :approved :rejected :corrected"}
+
+   ;; Timestamps
+   {:db/ident :review-queue/created-at
+    :db/valueType :db.type/instant
+    :db/cardinality :db.cardinality/one
+    :db/index true
+    :db/doc "When item was added to review queue"}
+
+   {:db/ident :review-queue/resolved-at
+    :db/valueType :db.type/instant
+    :db/cardinality :db.cardinality/one
+    :db/doc "When review was completed"}
+
+   {:db/ident :review-queue/resolved-by
+    :db/valueType :db.type/string
+    :db/cardinality :db.cardinality/one
+    :db/doc "User who resolved the review"}])
+
+(def human-decision-attributes
+  "Additional transaction attributes for human decisions (Phase 3).
+
+  Tracks when classifications were approved/corrected by humans."
+  [;; Classification approval
+   {:db/ident :transaction/classification-approved?
+    :db/valueType :db.type/boolean
+    :db/cardinality :db.cardinality/one
+    :db/doc "Whether classification was approved by human"}
+
+   {:db/ident :transaction/classification-corrected?
+    :db/valueType :db.type/boolean
+    :db/cardinality :db.cardinality/one
+    :db/doc "Whether classification was corrected by human"}
+
+   {:db/ident :transaction/classified-by
+    :db/valueType :db.type/string
+    :db/cardinality :db.cardinality/one
+    :db/doc "User who classified/approved this transaction"}
+
+   {:db/ident :transaction/classified-at
+    :db/valueType :db.type/instant
+    :db/cardinality :db.cardinality/one
+    :db/doc "When classification was approved/corrected"}])
+
+(def extended-event-attributes
+  "Extended event attributes for Phase 3 human-in-the-loop events."
+  [;; Transaction ID for classification events
+   {:db/ident :event/transaction-id
+    :db/valueType :db.type/string
+    :db/cardinality :db.cardinality/one
+    :db/doc "Transaction ID for classification events"}
+
+   ;; Merchant/category for classification events
+   {:db/ident :event/merchant
+    :db/valueType :db.type/string
+    :db/cardinality :db.cardinality/one
+    :db/doc "Merchant name for classification events"}
+
+   {:db/ident :event/category
+    :db/valueType :db.type/string
+    :db/cardinality :db.cardinality/one
+    :db/doc "Category name for classification events"}
+
+   ;; Corrected values
+   {:db/ident :event/corrected-merchant
+    :db/valueType :db.type/string
+    :db/cardinality :db.cardinality/one
+    :db/doc "Corrected merchant name"}
+
+   {:db/ident :event/corrected-category
+    :db/valueType :db.type/string
+    :db/cardinality :db.cardinality/one
+    :db/doc "Corrected category name"}
+
+   ;; User who made decision
+   {:db/ident :event/approved-by
+    :db/valueType :db.type/string
+    :db/cardinality :db.cardinality/one
+    :db/doc "User who approved classification"}
+
+   {:db/ident :event/rejected-by
+    :db/valueType :db.type/string
+    :db/cardinality :db.cardinality/one
+    :db/doc "User who rejected classification"}
+
+   {:db/ident :event/corrected-by
+    :db/valueType :db.type/string
+    :db/cardinality :db.cardinality/one
+    :db/doc "User who corrected classification"}
+
+   ;; Rejection reason
+   {:db/ident :event/reason
+    :db/valueType :db.type/string
+    :db/cardinality :db.cardinality/one
+    :db/doc "Reason for rejection"}
+
+   ;; Event timestamp
+   {:db/ident :event/timestamp
+    :db/valueType :db.type/instant
+    :db/cardinality :db.cardinality/one
+    :db/index true
+    :db/doc "When event occurred"}])
+
 ;; ============================================================================
 ;; COMPLETE SCHEMA
 ;; ============================================================================
@@ -292,7 +433,10 @@
           bank-attributes
           merchant-attributes
           category-attributes
-          classification-attributes))
+          classification-attributes
+          review-queue-attributes
+          human-decision-attributes
+          extended-event-attributes))
 
 ;; ============================================================================
 ;; SCHEMA INSTALLATION

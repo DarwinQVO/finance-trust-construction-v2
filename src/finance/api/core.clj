@@ -19,7 +19,8 @@
             [taoensso.timbre :as log]
             [finance.api.routes :as routes]
             [finance.api.middleware :as middleware]
-            [finance.core-datomic :as db])
+            [finance.core-datomic :as db]
+            [finance.orchestration.ml-pipeline :as ml-pipeline])
   (:gen-class))
 
 ;; ============================================================================
@@ -69,23 +70,30 @@
     (let [conn (db/init!)]
       (log/info :event :datomic-connected)
 
-      ;; 2. Create router
+      ;; 2. Start ML Pipeline workers
+      (log/info :event :ml-pipeline-starting)
+      (ml-pipeline/start-pipeline! conn)
+      (log/info :event :ml-pipeline-started)
+
+      ;; 3. Create router
       (log/info :event :router-creating)
       (let [router (routes/create-router)]
         (log/info :event :router-created)
 
-        ;; 3. Apply middleware stack
+        ;; 4. Apply middleware stack
         (log/info :event :middleware-applying)
         (let [app (middleware/build-middleware-stack router conn)]
           (log/info :event :middleware-applied)
 
-          ;; 4. Start Jetty
+          ;; 5. Start Jetty
           (log/info :event :jetty-starting :config server-config)
           (let [server (jetty/run-jetty app server-config)]
             (log/info :event :server-started
                       :port (:port server-config)
                       :endpoints ["/api/v1/health"
                                  "/api/v1/transactions"
+                                 "/api/v1/transactions/:id/classify"
+                                 "/api/v1/review-queue"
                                  "/api/v1/stats"
                                  "/api/v1/rules"])
             server))))
@@ -104,11 +112,19 @@
 
   Side Effects:
   - Stops HTTP server
+  - Shuts down ML pipeline
   - Closes Datomic connection (implicit)"
   [server]
   (when server
     (try
       (log/info :event :server-stopping)
+
+      ;; Stop ML pipeline workers
+      (log/info :event :ml-pipeline-stopping)
+      (ml-pipeline/shutdown-pipeline!)
+      (log/info :event :ml-pipeline-stopped)
+
+      ;; Stop HTTP server
       (.stop server)
       (log/info :event :server-stopped)
       (catch Exception e
@@ -156,11 +172,18 @@
       (println "✅ Server running on http://localhost:3000")
       (println)
       (println "Endpoints:")
-      (println "  GET http://localhost:3000/api/v1/health")
-      (println "  GET http://localhost:3000/api/v1/transactions")
-      (println "  GET http://localhost:3000/api/v1/transactions/:id")
-      (println "  GET http://localhost:3000/api/v1/stats")
-      (println "  GET http://localhost:3000/api/v1/rules")
+      (println "  GET  http://localhost:3000/api/v1/health")
+      (println "  GET  http://localhost:3000/api/v1/transactions")
+      (println "  GET  http://localhost:3000/api/v1/transactions/:id")
+      (println "  POST http://localhost:3000/api/v1/transactions/:id/classify")
+      (println "  GET  http://localhost:3000/api/v1/review-queue")
+      (println "  POST http://localhost:3000/api/v1/review-queue/:id/approve")
+      (println "  POST http://localhost:3000/api/v1/review-queue/:id/reject")
+      (println "  POST http://localhost:3000/api/v1/review-queue/:id/correct")
+      (println "  GET  http://localhost:3000/api/v1/stats")
+      (println "  GET  http://localhost:3000/api/v1/rules")
+      (println)
+      (println "ML Pipeline: ✅ Running (Python service at http://localhost:8000)")
       (println)
       (println "Press Ctrl+C to stop")
       (println)

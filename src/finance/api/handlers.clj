@@ -8,7 +8,8 @@
   4. Context-independent (works with batch, streaming, channels)"
   (:require [datomic.api :as d]
             [taoensso.timbre :as log]
-            [clojure.data.json :as json]))
+            [clojure.data.json :as json]
+            [finance.orchestration.ml-pipeline :as ml-pipeline]))
 
 ;; ============================================================================
 ;; Transducers: Reusable Transformation Pipelines
@@ -296,6 +297,188 @@
       {:status 500
        :body {:error "Failed to load rules"
               :message (.getMessage e)}})))
+
+;; ============================================================================
+;; ML Classification & Review Queue (Phase 3)
+;; ============================================================================
+
+(defn classify-transaction-handler
+  "Submit transaction for ML classification.
+
+  Path param:
+  - id: Transaction ID
+
+  Returns:
+  - 202 Accepted (queued for processing)
+
+  Example: POST /v1/transactions/123/classify"
+  [{:keys [conn path-params] :as _request}]
+  (let [db (d/db conn)
+        tx-id (parse-long (:id path-params))
+
+        ;; Fetch transaction
+        tx (d/pull db
+                   '[:transaction/id
+                     :transaction/date
+                     :transaction/amount
+                     :transaction/description]
+                   tx-id)]
+
+    (if (:transaction/id tx)
+      (do
+        (log/info :event :classify-transaction-request :id tx-id)
+
+        ;; Submit to ML pipeline
+        (ml-pipeline/submit-transaction-for-classification
+          {:id (:transaction/id tx)
+           :description (:transaction/description tx)
+           :amount (:transaction/amount tx)
+           :date (:transaction/date tx)})
+
+        {:status 202
+         :body {:message "Transaction queued for classification"
+                :transaction-id tx-id}})
+      (do
+        (log/warn :event :transaction-not-found :id tx-id)
+        {:status 404
+         :body {:error "Transaction not found"
+                :id tx-id}}))))
+
+(defn get-review-queue-handler
+  "Get all pending review queue items.
+
+  Returns list of transactions awaiting human review.
+
+  Example: GET /v1/review-queue"
+  [{:keys [conn] :as _request}]
+  (let [items (ml-pipeline/get-review-queue conn)]
+    (log/info :event :get-review-queue :count (count items))
+
+    {:status 200
+     :body {:items items
+            :count (count items)}}))
+
+(defn approve-classification-handler
+  "Approve ML classification (human decision).
+
+  Path param:
+  - id: Transaction ID
+
+  Body:
+  - merchant: Approved merchant name
+  - category: Approved category name
+  - approved-by: User email/ID
+
+  Example: POST /v1/review-queue/123/approve
+           Body: {\"merchant\": \"starbucks\", \"category\": \"cafe\", \"approved-by\": \"user@example.com\"}"
+  [{:keys [path-params body-params] :as _request}]
+  (let [tx-id (parse-long (:id path-params))
+        merchant (get body-params "merchant")
+        category (get body-params "category")
+        approved-by (get body-params "approved-by")]
+
+    (if (and merchant category approved-by)
+      (do
+        (log/info :event :approve-classification
+                  :tx-id tx-id
+                  :merchant merchant
+                  :category category
+                  :approved-by approved-by)
+
+        ;; Submit approval to pipeline
+        (ml-pipeline/approve-classification tx-id merchant category approved-by)
+
+        {:status 200
+         :body {:message "Classification approved"
+                :transaction-id tx-id
+                :merchant merchant
+                :category category}})
+      (do
+        (log/warn :event :approve-classification-invalid-params
+                  :tx-id tx-id)
+        {:status 400
+         :body {:error "Missing required fields"
+                :required ["merchant" "category" "approved-by"]}}))))
+
+(defn reject-classification-handler
+  "Reject ML classification (human decision).
+
+  Path param:
+  - id: Transaction ID
+
+  Body:
+  - reason: Rejection reason
+  - rejected-by: User email/ID
+
+  Example: POST /v1/review-queue/123/reject
+           Body: {\"reason\": \"Incorrect merchant\", \"rejected-by\": \"user@example.com\"}"
+  [{:keys [path-params body-params] :as _request}]
+  (let [tx-id (parse-long (:id path-params))
+        reason (get body-params "reason")
+        rejected-by (get body-params "rejected-by")]
+
+    (if (and reason rejected-by)
+      (do
+        (log/info :event :reject-classification
+                  :tx-id tx-id
+                  :reason reason
+                  :rejected-by rejected-by)
+
+        ;; Submit rejection to pipeline
+        (ml-pipeline/reject-classification tx-id reason rejected-by)
+
+        {:status 200
+         :body {:message "Classification rejected"
+                :transaction-id tx-id
+                :reason reason}})
+      (do
+        (log/warn :event :reject-classification-invalid-params
+                  :tx-id tx-id)
+        {:status 400
+         :body {:error "Missing required fields"
+                :required ["reason" "rejected-by"]}}))))
+
+(defn correct-classification-handler
+  "Submit corrected classification (human decision).
+
+  Path param:
+  - id: Transaction ID
+
+  Body:
+  - corrected-merchant: Corrected merchant name
+  - corrected-category: Corrected category name
+  - corrected-by: User email/ID
+
+  Example: POST /v1/review-queue/123/correct
+           Body: {\"corrected-merchant\": \"starbucks\", \"corrected-category\": \"cafe\", \"corrected-by\": \"user@example.com\"}"
+  [{:keys [path-params body-params] :as _request}]
+  (let [tx-id (parse-long (:id path-params))
+        corrected-merchant (get body-params "corrected-merchant")
+        corrected-category (get body-params "corrected-category")
+        corrected-by (get body-params "corrected-by")]
+
+    (if (and corrected-merchant corrected-category corrected-by)
+      (do
+        (log/info :event :correct-classification
+                  :tx-id tx-id
+                  :corrected-merchant corrected-merchant
+                  :corrected-category corrected-category
+                  :corrected-by corrected-by)
+
+        ;; Submit correction to pipeline
+        (ml-pipeline/correct-classification tx-id corrected-merchant corrected-category corrected-by)
+
+        {:status 200
+         :body {:message "Classification corrected"
+                :transaction-id tx-id
+                :corrected-merchant corrected-merchant
+                :corrected-category corrected-category}})
+      (do
+        (log/warn :event :correct-classification-invalid-params
+                  :tx-id tx-id)
+        {:status 400
+         :body {:error "Missing required fields"
+                :required ["corrected-merchant" "corrected-category" "corrected-by"]}}))))
 
 ;; ============================================================================
 ;; Not Found

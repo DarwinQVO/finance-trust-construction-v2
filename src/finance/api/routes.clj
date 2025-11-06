@@ -92,7 +92,49 @@
     ["/rules"
      {:get {:handler handlers/list-rules-handler
             :summary "List classification rules"
-            :description "Returns all merchant classification rules from EDN file"}}]]])
+            :description "Returns all merchant classification rules from EDN file"}}]
+
+    ;; ========================================================================
+    ;; ML Classification & Review Queue (Phase 3)
+    ;; ========================================================================
+
+    ["/transactions/:id/classify"
+     {:post {:handler handlers/classify-transaction-handler
+             :summary "Submit transaction for ML classification"
+             :description "Queues transaction for merchant/category detection via Python ML service"
+             :parameters {:path {:id :long}}}}]
+
+    ["/review-queue"
+     [""
+      {:get {:handler handlers/get-review-queue-handler
+             :summary "Get pending review queue items"
+             :description "Returns all transactions awaiting human review"}}]
+
+     ["/:id/approve"
+      {:post {:handler handlers/approve-classification-handler
+              :summary "Approve ML classification"
+              :description "Human approval of ML-detected merchant and category"
+              :parameters {:path {:id :long}
+                          :body {:merchant :string
+                                :category :string
+                                :approved-by :string}}}}]
+
+     ["/:id/reject"
+      {:post {:handler handlers/reject-classification-handler
+              :summary "Reject ML classification"
+              :description "Human rejection of ML classification with reason"
+              :parameters {:path {:id :long}
+                          :body {:reason :string
+                                :rejected-by :string}}}}]
+
+     ["/:id/correct"
+      {:post {:handler handlers/correct-classification-handler
+              :summary "Correct ML classification"
+              :description "Human correction of ML-detected merchant and category"
+              :parameters {:path {:id :long}
+                          :body {:corrected-merchant :string
+                                :corrected-category :string
+                                :corrected-by :string}}}}]]]])
 
 ;; ============================================================================
 ;; Router Creation
