@@ -342,6 +342,505 @@ When building Python ML Service, ensure:
 
 ---
 
+## 👤 Human-in-the-Loop Pattern
+
+**The Missing Piece:** ML can predict, but humans decide what becomes truth.
+
+### The Core Insight
+
+> "The system doesn't accumulate ML predictions. It accumulates human-approved facts. ML transforms values, humans decide which transformed values become knowledge."
+
+### The Complete Value Flow (with Human)
+
+```
+1. IMPORT
+   Raw Transaction (from CSV/bank)
+         ↓
+   [REMEMBER] Store raw fact in Datomic
+         ↓
+   New immutable value exists
+
+2. TRANSFORM (ML)
+   Transaction value
+         ↓
+   [ROUTE] Clojure: "needs classification"
+         ↓
+   [MOVE] Send to Python ML
+         ↓
+   [TRANSFORM] Python: Transaction → Classification
+         ↓
+   [MOVE] Return classification value
+         ↓
+   Classification value exists (NOT stored yet!)
+
+3. PRESENT FOR OBSERVATION (Human)
+   Classification value (with confidence)
+         ↓
+   [ROUTE] Clojure: "show to human for review"
+         ↓
+   UI displays:
+     • Transaction: "STARBUCKS #1234" ($4.99)
+     • ML says: Merchant=Starbucks, Category=Café
+     • Confidence: 95%
+     • Actions: [Approve] [Reject] [Correct]
+         ↓
+   Human observes (no state change yet!)
+
+4. DECISION (Human)
+   Human clicks [Approve]
+         ↓
+   [TRANSFORM] UI: Button click → Decision event
+         ↓
+   Decision value exists
+
+5. ACCUMULATE APPROVED FACT
+   Decision value
+         ↓
+   [ROUTE] Clojure: "human approved this classification"
+         ↓
+   [REMEMBER] Store approved fact:
+     • Original transaction (already stored)
+     • Classification result (NOW stored)
+     • Human decision event (audit trail)
+     • Timestamp + who approved
+         ↓
+   Knowledge graph grows with APPROVED fact only
+```
+
+---
+
+### The 3 Human Decision Types
+
+**1. Approve (Accept ML)**
+```clojure
+;; User clicks [Approve]
+{:event/type :classification-approved
+ :event/tx-id "tx-12345"
+ :event/classification {:merchant :starbucks
+                        :category :cafe
+                        :confidence 0.95}
+ :event/approved-by "user@example.com"
+ :event/timestamp #inst "2024-03-20T10:30:00Z"
+ :event/ml-model "gpt-4-2024-01-01"}
+
+;; Result: Classification stored in Datomic
+(d/transact conn
+  [{:transaction/id "tx-12345"
+    :transaction/merchant [:entity/canonical-name "starbucks"]
+    :transaction/category [:entity/canonical-name "cafe"]
+    :transaction/classification-confidence 0.95
+    :transaction/classified-at #inst "2024-03-20T10:30:00Z"
+    :transaction/classified-by "user@example.com"}])
+```
+
+---
+
+**2. Reject (ML wrong, don't store)**
+```clojure
+;; User clicks [Reject]
+{:event/type :classification-rejected
+ :event/tx-id "tx-12345"
+ :event/classification {:merchant :starbucks
+                        :category :cafe
+                        :confidence 0.95}
+ :event/rejected-by "user@example.com"
+ :event/timestamp #inst "2024-03-20T10:30:00Z"
+ :event/reason "Wrong merchant detected"
+ :event/ml-model "gpt-4-2024-01-01"}
+
+;; Result: Transaction remains unclassified
+;; ML result logged for model improvement
+;; NO classification stored
+```
+
+---
+
+**3. Correct (ML close, human fixes)**
+```clojure
+;; User clicks [Correct], modifies fields, clicks [Save]
+{:event/type :classification-corrected
+ :event/tx-id "tx-12345"
+ :event/original-classification {:merchant :starbucks
+                                 :category :cafe
+                                 :confidence 0.95}
+ :event/corrected-classification {:merchant :starbucks
+                                  :category :breakfast  ; ← User changed
+                                  :confidence 1.0}      ; ← Human = 100%
+ :event/corrected-by "user@example.com"
+ :event/timestamp #inst "2024-03-20T10:30:00Z"
+ :event/correction-reason "Coffee + food = breakfast"
+ :event/ml-model "gpt-4-2024-01-01"}
+
+;; Result: Corrected classification stored
+;; Original ML result logged for model training
+(d/transact conn
+  [{:transaction/id "tx-12345"
+    :transaction/merchant [:entity/canonical-name "starbucks"]
+    :transaction/category [:entity/canonical-name "breakfast"]  ; ← Corrected
+    :transaction/classification-confidence 1.0                  ; ← Human
+    :transaction/classified-at #inst "2024-03-20T10:30:00Z"
+    :transaction/classified-by "user@example.com"}])
+```
+
+---
+
+### UI Pattern for Human Review
+
+**Review Queue Screen:**
+```
+╔══════════════════════════════════════════════════════════════╗
+║ CLASSIFICATION REVIEW QUEUE                            [?]   ║
+╠══════════════════════════════════════════════════════════════╣
+║ Pending Review: 42 transactions                             ║
+║                                                              ║
+║ ┌──────────────────────────────────────────────────────────┐ ║
+║ │ Transaction #tx-12345                                    │ ║
+║ │                                                          │ ║
+║ │ Date:        2024-03-20                                 │ ║
+║ │ Amount:      $4.99                                      │ ║
+║ │ Description: STARBUCKS #1234 SEATTLE WA                 │ ║
+║ │                                                          │ ║
+║ │ ── ML CLASSIFICATION ─────────────────────────────────  │ ║
+║ │ Merchant:    STARBUCKS                                  │ ║
+║ │ Category:    Café                                       │ ║
+║ │ Confidence:  ████████░░ 95% [HIGH] ✓                   │ ║
+║ │ Model:       gpt-4-2024-01-01                           │ ║
+║ │                                                          │ ║
+║ │ [✓ Approve]  [✗ Reject]  [✏️ Correct]          [Skip]  │ ║
+║ └──────────────────────────────────────────────────────────┘ ║
+║                                                              ║
+║ Next: [Enter]  Previous: [Backspace]  Quit: [q]            ║
+╚══════════════════════════════════════════════════════════════╝
+```
+
+**Correction Screen (if user clicks [Correct]):**
+```
+╔══════════════════════════════════════════════════════════════╗
+║ CORRECT CLASSIFICATION - Transaction #tx-12345         [?]   ║
+╠══════════════════════════════════════════════════════════════╣
+║                                                              ║
+║ Original Transaction:                                        ║
+║   Description: STARBUCKS #1234 SEATTLE WA                   ║
+║   Amount:      $4.99                                        ║
+║                                                              ║
+║ ── ML SUGGESTED ─────────────────────────────────────────   ║
+║ Merchant: STARBUCKS                                         ║
+║ Category: Café                                              ║
+║                                                              ║
+║ ── YOUR CORRECTION ──────────────────────────────────────   ║
+║ Merchant: [STARBUCKS              ] ← Edit if needed        ║
+║ Category: [Breakfast              ] ← Changed               ║
+║                                                              ║
+║ Reason (optional):                                          ║
+║ ┌──────────────────────────────────────────────────────┐    ║
+║ │ Coffee + bagel = breakfast not café                  │    ║
+║ └──────────────────────────────────────────────────────┘    ║
+║                                                              ║
+║ [💾 Save]  [Cancel]                                         ║
+╚══════════════════════════════════════════════════════════════╝
+```
+
+---
+
+### Event Schema for Human Decisions
+
+```clojure
+;; Datomic schema for human decision events
+{:db/ident :event/type
+ :db/valueType :db.type/keyword
+ :db/cardinality :db.cardinality/one
+ :db/doc "Type of human decision event"}
+
+{:db/ident :event/tx-id
+ :db/valueType :db.type/string
+ :db/cardinality :db.cardinality/one
+ :db/doc "Transaction ID this event refers to"}
+
+{:db/ident :event/classification
+ :db/valueType :db.type/ref
+ :db/cardinality :db.cardinality/one
+ :db/doc "Reference to classification result"}
+
+{:db/ident :event/approved-by
+ :db/valueType :db.type/string
+ :db/cardinality :db.cardinality/one
+ :db/doc "Email/ID of user who approved"}
+
+{:db/ident :event/timestamp
+ :db/valueType :db.type/instant
+ :db/cardinality :db.cardinality/one
+ :db/doc "When decision was made"}
+
+{:db/ident :event/ml-model
+ :db/valueType :db.type/string
+ :db/cardinality :db.cardinality/one
+ :db/doc "ML model version that generated classification"}
+
+{:db/ident :event/reason
+ :db/valueType :db.type/string
+ :db/cardinality :db.cardinality/one
+ :db/doc "Why decision was made (for reject/correct)"}
+
+{:db/ident :event/original-classification
+ :db/valueType :db.type/ref
+ :db/cardinality :db.cardinality/one
+ :db/doc "Original ML classification (for corrections)"}
+
+{:db/ident :event/corrected-classification
+ :db/valueType :db.type/ref
+ :db/cardinality :db.cardinality/one
+ :db/doc "Human-corrected classification"}
+```
+
+---
+
+### Integration with Value Flow
+
+**Complete flow showing ALL 4 service types + Human:**
+
+```
+Raw Transaction
+      ↓
+[4. REMEMBER] Import raw fact
+      ↓
+Transaction entity exists
+      ↓
+[1. ROUTE] Router: "needs ML classification?"
+      ↓
+[2. MOVE] core.async: Send to ML queue
+      ↓
+[3. TRANSFORM] Python ML: tx → classification
+      ↓
+[2. MOVE] core.async: Return result
+      ↓
+Classification value exists (NOT persisted)
+      ↓
+[1. ROUTE] Router: "confidence < 100%? → needs human review"
+      ↓
+[2. MOVE] Add to human review queue
+      ↓
+UI presents for observation
+      ↓
+👤 HUMAN OBSERVES (no state change)
+      ↓
+👤 HUMAN DECIDES:
+   • Approve → [4. REMEMBER] Store approved classification
+   • Reject → [4. REMEMBER] Log rejection (no classification stored)
+   • Correct → [4. REMEMBER] Store corrected classification
+      ↓
+Knowledge graph updated with ONLY approved facts
+      ↓
+[4. REMEMBER] Log decision event (audit trail)
+      ↓
+Done. All decisions recorded, all facts immutable.
+```
+
+---
+
+### Why This Pattern Works
+
+**1. ML Predictions ≠ Facts**
+```
+ML Output: "I think this is Starbucks" (confidence 95%)
+Human Decision: "Yes, this IS Starbucks" (fact)
+
+System accumulates FACTS, not predictions.
+```
+
+**2. Human Review as a Service Type**
+```
+Human is another TRANSFORM service:
+  Input: Transaction + ML classification
+  Output: Approved classification OR Rejection OR Correction
+
+Difference: Async (human takes minutes, ML takes seconds)
+```
+
+**3. Confidence Threshold Routes to Human**
+```clojure
+(defn route-for-review [classification]
+  (if (>= (:confidence classification) 0.90)
+    :auto-approve     ; High confidence → skip human
+    :human-review))   ; Low confidence → needs human
+```
+
+**4. All Decisions are Events (Audit Trail)**
+```
+Every human decision stored as immutable event:
+- What was suggested (ML output)
+- What was decided (approve/reject/correct)
+- Who decided (user ID)
+- When decided (timestamp)
+- Why decided (optional reason)
+
+Can replay decisions, analyze patterns, improve ML.
+```
+
+---
+
+### Benefits of This Pattern
+
+**For the System:**
+- ✅ Knowledge graph contains ONLY human-approved facts
+- ✅ ML results don't pollute data until approved
+- ✅ Complete audit trail of every decision
+- ✅ Can improve ML from human corrections
+
+**For the User:**
+- ✅ Always in control (ML suggests, human decides)
+- ✅ Can correct ML mistakes before they're stored
+- ✅ Can see confidence scores (know when to trust ML)
+- ✅ Can skip low-confidence items for later review
+
+**For Rich Hickey:**
+- ✅ Values flow through transformations ✓
+- ✅ Human is just another transform (async) ✓
+- ✅ Routing based on data (confidence threshold) ✓
+- ✅ Immutable events (all decisions recorded) ✓
+- ✅ No distributed objects (UI doesn't modify DB directly) ✓
+
+---
+
+### Phase 2 Implementation Checklist (Updated)
+
+When building Python ML Service AND human review:
+
+- [ ] **Python endpoints return classifications with confidence**
+  ```python
+  return Classification(
+      merchant="starbucks",
+      confidence=0.95,  # ← CRITICAL for routing
+      model_version="gpt-4-2024"
+  )
+  ```
+
+- [ ] **Clojure routes based on confidence**
+  ```clojure
+  (if (>= (:confidence result) confidence-threshold)
+    (store-classification! result)      ; Auto-approve
+    (add-to-review-queue! result))      ; Human review
+  ```
+
+- [ ] **Create human review queue**
+  ```clojure
+  ;; In-memory queue (or Datomic entity)
+  (def review-queue (atom []))
+
+  (defn add-to-review-queue! [classification]
+    (swap! review-queue conj classification))
+
+  (defn get-next-for-review []
+    (first @review-queue))
+  ```
+
+- [ ] **Add API endpoints for human decisions**
+  ```clojure
+  POST /v1/reviews/:tx-id/approve
+  POST /v1/reviews/:tx-id/reject
+  POST /v1/reviews/:tx-id/correct
+  GET  /v1/reviews/queue
+  ```
+
+- [ ] **Store decision events**
+  ```clojure
+  (defn store-decision-event! [decision]
+    (d/transact conn [decision])
+    ;; If approved/corrected, also update transaction
+    ;; If rejected, just log the event
+    )
+  ```
+
+- [ ] **Build UI for review queue** (Phase 4)
+  - Show transactions needing review
+  - Display ML classification + confidence
+  - Approve/Reject/Correct buttons
+  - Correction form with pre-filled ML values
+
+---
+
+### Example: End-to-End Flow with Human
+
+**Scenario:** Import transaction → ML classifies → Human approves
+
+```clojure
+;; 1. Import raw transaction
+(import-transaction!
+  {:description "STARBUCKS #1234 SEATTLE WA"
+   :amount 4.99
+   :date "2024-03-20"})
+;; → tx-12345 created
+
+;; 2. Trigger ML classification
+(classify-transaction! "tx-12345")
+;; → Calls Python ML service
+;; → Returns: {:merchant :starbucks :category :cafe :confidence 0.95}
+
+;; 3. Check confidence, route to human
+(route-classification! "tx-12345" classification)
+;; → confidence 95% < 100% → add to review queue
+;; → UI shows transaction in review queue
+
+;; 4. Human reviews in UI, clicks [Approve]
+;; → POST /v1/reviews/tx-12345/approve
+(approve-classification! "tx-12345" "user@example.com")
+
+;; 5. Store approved fact + decision event
+(d/transact conn
+  [;; Update transaction with approved classification
+   {:transaction/id "tx-12345"
+    :transaction/merchant [:entity/canonical-name "starbucks"]
+    :transaction/category [:entity/canonical-name "cafe"]
+    :transaction/classification-confidence 0.95}
+
+   ;; Store decision event
+   {:event/type :classification-approved
+    :event/tx-id "tx-12345"
+    :event/approved-by "user@example.com"
+    :event/timestamp (java.util.Date.)}])
+
+;; Done! Knowledge graph now contains human-approved fact.
+```
+
+---
+
+### Lego Pieces Analogy
+
+**Your insight:** "es como piezas de lego y como una linea de ensamblaje"
+
+**Exactly! The pieces:**
+
+1. **Import** (Lego piece #1): Raw transaction → System
+2. **ML Transform** (Lego piece #2): Transaction → Classification
+3. **Human Transform** (Lego piece #3): Classification → Decision
+4. **Store** (Lego piece #4): Decision → Knowledge graph
+
+**The assembly line:**
+```
+Raw CSV → [Import] → [ML] → [Human] → [Store] → Done
+          piece 1    piece 2  piece 3   piece 4
+
+Each piece:
+- Takes values as input
+- Transforms them
+- Outputs new values
+- Can be replaced/upgraded independently
+- Can be tested in isolation
+```
+
+**Why this works:**
+- ✅ Pieces don't know about each other
+- ✅ Values flow through like items on conveyor belt
+- ✅ Can add quality control at any stage
+- ✅ Can run multiple assembly lines in parallel
+- ✅ Can swap pieces without stopping factory
+
+---
+
+**Rich Hickey Would Say:**
+> "Perfect. You understood the key insight: human review is not special—it's just another transformation in the pipeline. The only difference is latency (humans are slower than ML). But the pattern is identical: receive value, transform it, return new value. The routing logic (confidence threshold) decides which path values take. Beautiful."
+
+---
+
 ## 🔄 Transducer Patterns (Applied)
 
 ### Pattern 1: API Response Pipelines
