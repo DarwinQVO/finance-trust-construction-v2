@@ -1,0 +1,26 @@
+# Clojure
+.cpcache/
+.nrepl-port
+.lein-*
+target/
+classes/
+checkouts/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.bak
