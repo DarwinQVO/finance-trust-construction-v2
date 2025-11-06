@@ -18,6 +18,7 @@
   - Classification_Notes"
   (:require [clojure.data.csv :as csv]
             [clojure.java.io :as io]
+            [clojure.edn :as edn]
             [datomic.api :as d]
             [trust.datomic-schema :as schema]
             [trust.identity-datomic :as identity]
@@ -31,18 +32,40 @@
 ;; ============================================================================
 
 (defn parse-date
-  "Parse date string (various formats supported)."
+  "Parse date string (various formats supported).
+
+  Rich Hickey Principle: NEVER FABRICATE DATA (Bug #15 fix).
+  - Parse failure = EXPLICIT ERROR
+  - NO silent defaults to 'NOW'
+  - Preserves temporal causality (can't corrupt time-travel)
+
+  Supported formats:
+  - MM/dd/yyyy (e.g., '03/20/2024')
+  - yyyy-MM-dd (e.g., '2024-03-20')
+
+  Throws ex-info if date cannot be parsed.
+
+  Why this matters:
+  - Silent 'NOW' collapses different transactions to same timestamp
+  - Destroys historical analysis and reconciliation
+  - Creates false temporal ordering
+  - Makes time-travel queries meaningless"
   [date-str]
   (when date-str
     (try
       ;; Try MM/dd/yyyy format first
       (.parse (SimpleDateFormat. "MM/dd/yyyy") date-str)
-      (catch Exception _
+      (catch Exception e1
         (try
           ;; Try yyyy-MM-dd format
           (.parse (SimpleDateFormat. "yyyy-MM-dd") date-str)
-          (catch Exception _
-            (java.util.Date.)))))))
+          (catch Exception e2
+            ;; FAIL LOUDLY - never fabricate timestamps!
+            (throw (ex-info (format "Invalid date format: '%s'. Expected: MM/dd/yyyy or yyyy-MM-dd" date-str)
+                            {:input date-str
+                             :tried-formats ["MM/dd/yyyy" "yyyy-MM-dd"]
+                             :error-1 (.getMessage e1)
+                             :error-2 (.getMessage e2)}))))))))
 
 (defn parse-amount
   "Parse amount string to double.
@@ -50,15 +73,24 @@
   ALWAYS returns POSITIVE amount (Math/abs).
   Direction is encoded in :transaction/type, not amount polarity.
 
+  Rich Hickey Principle: NEVER FABRICATE DATA (Bug #15 fix).
+  - Parse failure = EXPLICIT ERROR
+  - NO silent default to 0.0 (ambiguous with valid zero)
+  - Preserves distinction between 'zero amount' and 'parse error'
+
   Examples:
     (parse-amount \"-45.99\")  ; => 45.99 (positive)
     (parse-amount \"$1,234\")  ; => 1234.0
-    (parse-amount \"invalid\") ; => 0.0 (fallback)
+    (parse-amount \"invalid\") ; => ERROR! (was: 0.0 - ambiguous)
 
   Rationale (Rich Hickey principle):
   - Amount is a magnitude (always >= 0)
   - Type (:income/:expense/:transfer) is the direction semantic
-  - Separates 'what' (amount) from 'how' (type)"
+  - Separates 'what' (amount) from 'how' (type)
+  - Zero is VALID (authorization holds, fee waivers)
+  - Using 0.0 as error sentinel ambiguates data
+
+  Throws ex-info if amount cannot be parsed."
   [amount-str]
   (when amount-str
     (try
@@ -66,7 +98,11 @@
           (clojure.string/replace #"[$,]" "")
           (Double/parseDouble)
           Math/abs)  ; Always positive - direction comes from :type
-      (catch Exception _ 0.0))))
+      (catch Exception e
+        ;; FAIL LOUDLY - never fabricate amounts!
+        (throw (ex-info (format "Invalid amount format: '%s'. Expected numeric value (e.g., '45.99', '$1,234', '-100.00')" amount-str)
+                        {:input amount-str
+                         :error (.getMessage e)}))))))
 
 (defn normalize-type
   "Normalize transaction type to keyword.
@@ -483,32 +519,134 @@
       result)))
 
 ;; ============================================================================
+;; CATALOG EXTRACTION (Bug #14 fix)
+;; ============================================================================
+
+(defn load-rules
+  "Load merchant classification rules from resources.
+
+  Rich Hickey Principle: Single Source of Truth (Bug #14 fix).
+  - Rules define categories and merchants
+  - Catalog should be DERIVED from rules, not maintained separately
+  - One source of truth = zero drift between rules and entities
+
+  Returns: Vector of rule maps from resources/rules/merchant-rules.edn"
+  []
+  (try
+    (-> "rules/merchant-rules.edn"
+        io/resource
+        slurp
+        edn/read-string)
+    (catch Exception e
+      (println (format "⚠️  WARNING: Could not load rules file: %s" (.getMessage e)))
+      [])))
+
+(defn extract-categories-from-rules
+  "Extract unique categories from rules.
+
+  Returns: Set of category keywords (e.g., #{:restaurants :groceries :pharmacy})"
+  [rules]
+  (into #{} (keep :category rules)))
+
+(defn extract-merchants-from-rules
+  "Extract unique merchants from rules.
+
+  Returns: Set of merchant keywords (e.g., #{:starbucks :amazon :cvs})"
+  [rules]
+  (into #{} (keep :merchant rules)))
+
+(defn build-catalog-from-rules
+  "Build entity registration catalog derived from rules.
+
+  Rich Hickey Principle: Derived Data (Bug #14 fix).
+  - Categories and merchants come from rules (single source of truth)
+  - Auto-infer entity types from keyword namespace/usage
+  - No manual maintenance = no drift
+
+  Returns: Vector suitable for identity/register-batch!"
+  []
+  (let [rules (load-rules)
+        categories (extract-categories-from-rules rules)
+        merchants (extract-merchants-from-rules rules)]
+
+    (println (format "   📋 Found %d categories in rules: %s"
+                     (count categories)
+                     (clojure.string/join ", " (map name (sort categories)))))
+    (println (format "   🏪 Found %d merchants in rules: %s"
+                     (count merchants)
+                     (clojure.string/join ", " (map name (sort merchants)))))
+
+    ;; Build registration vector
+    (vec
+      (concat
+        ;; Categories with inferred types
+        (for [cat categories]
+          [cat {:entity/canonical-name (-> cat name clojure.string/capitalize)
+                :category/type (cond
+                                ;; Income categories
+                                (#{:salary :freelance :bonus} cat) :income
+                                ;; Transfer categories
+                                (#{:payment :transfer} cat) :transfer
+                                ;; Everything else is expense
+                                :else :expense)}])
+
+        ;; Merchants (no type needed, just entity)
+        (for [merchant merchants]
+          [merchant {:entity/canonical-name (-> merchant
+                                               name
+                                               (clojure.string/replace #"-" " ")
+                                               clojure.string/capitalize)}])))))
+
+;; ============================================================================
 ;; USAGE
 ;; ============================================================================
 
 (defn -main
   "Main entry point for import script.
 
+  Rich Hickey Principle: Context at Edges (Bug #13 fix).
+  - URI from config/env (caller decides), not hardcoded (mechanism decides)
+  - Storage choice (memory vs persistent) = deployment concern
+  - Domain logic should NOT make deployment decisions
+
   Usage:
-    clj -M -m scripts.import-all-sources"
+    # In-memory (testing/development):
+    clj -M -m scripts.import-all-sources
+
+    # Persistent (production - RECOMMENDED):
+    DATOMIC_URI='datomic:dev://localhost:4334/finance' clj -M -m scripts.import-all-sources
+
+    # Or provide as first arg:
+    clj -M -m scripts.import-all-sources datomic:dev://localhost:4334/finance /path/to/csv"
   [& args]
-  (let [file-path (or (first args)
+  (let [;; Config-driven URI (Bug #13 fix)
+        ;; Priority: CLI arg > ENV var > Default (memory - for backwards compat)
+        datomic-uri (or (second args)  ; CLI arg
+                       (System/getenv "DATOMIC_URI")  ; ENV var (production)
+                       "datomic:mem://finance")  ; Default (testing)
+        file-path (or (first args)
                       "/Users/darwinborges/finance/transactions_ALL_SOURCES.csv")]
 
     (println "\n🎯 Finance Trust Construction - Data Import")
     (println (apply str (repeat 50 "=")))
 
-    ;; Initialize Datomic
+    ;; Initialize Datomic (URI from config!)
     (println "\n1️⃣  Initializing Datomic...")
-    (d/create-database "datomic:mem://finance")
-    (def conn (d/connect "datomic:mem://finance"))
+    (println (format "   URI: %s" datomic-uri))
+    (when (.contains datomic-uri ":mem:")
+      (println "   ⚠️  WARNING: Using in-memory database - data will be lost on restart!"))
+    (d/create-database datomic-uri)
+    (def conn (d/connect datomic-uri))
 
     ;; Install schema
     (println "2️⃣  Installing schema...")
     (schema/install-schema! conn)
 
-    ;; Register default entities
+    ;; Register default entities (Bug #14 fix: Derived from rules!)
     (println "3️⃣  Registering default entities...")
+    (println "   Deriving catalog from rules (single source of truth)...")
+
+    ;; Banks (still hardcoded - not in rules)
     (identity/register-batch! conn
       [[:bofa {:entity/canonical-name "Bank of America"
                :bank/type :bank}]
@@ -519,33 +657,15 @@
        [:wise {:entity/canonical-name "Wise"
                :bank/type :payment-processor}]
        [:scotiabank {:entity/canonical-name "Scotiabank"
-                     :bank/type :bank}]
-       [:restaurants {:entity/canonical-name "Restaurants"
-                      :category/type :expense}]
-       [:groceries {:entity/canonical-name "Groceries"
-                    :category/type :expense}]
-       [:shopping {:entity/canonical-name "Shopping"
-                   :category/type :expense}]
-       [:transportation {:entity/canonical-name "Transportation"
-                         :category/type :expense}]
-       [:salary {:entity/canonical-name "Salary"
-                 :category/type :income}]
-       [:freelance {:entity/canonical-name "Freelance"
-                    :category/type :income}]
-       [:payment {:entity/canonical-name "Payment"
-                  :category/type :transfer}]
-       [:uncategorized {:entity/canonical-name "Uncategorized"
-                        :category/type :unknown}]
+                     :bank/type :bank}]])
 
-       ;; Common merchants
-       [:starbucks {:entity/canonical-name "Starbucks"}]
-       [:amazon {:entity/canonical-name "Amazon"}]
-       [:uber {:entity/canonical-name "Uber"}]
-       [:stripe {:entity/canonical-name "Stripe"}]
-       [:apple {:entity/canonical-name "Apple"}]
-       [:google {:entity/canonical-name "Google"}]
-       [:netflix {:entity/canonical-name "Netflix"}]
-       [:spotify {:entity/canonical-name "Spotify"}]
+    ;; Categories + Merchants (DERIVED from rules - Bug #14 fix!)
+    (identity/register-batch! conn (build-catalog-from-rules))
+
+    ;; Fallback entities (always needed)
+    (identity/register-batch! conn
+      [[:uncategorized {:entity/canonical-name "Uncategorized"
+                        :category/type :unknown}]
        [:unknown-merchant {:entity/canonical-name "Unknown Merchant"}]])
 
     ;; Import data

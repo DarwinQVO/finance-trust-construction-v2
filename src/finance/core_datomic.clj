@@ -35,16 +35,34 @@
 (defn init!
   "Initialize the finance system with Datomic backend.
 
+  Rich Hickey Principle: Context at Edges (Bug #13 fix).
+  - URI from ENV var (caller decides), not hardcoded
+  - Storage choice = deployment concern, not domain logic
+  - Zero-arity form reads from DATOMIC_URI env var
+
   Args:
-    uri - Datomic URI (default: datomic:mem://finance for testing)
+    uri - Datomic URI (optional, reads from DATOMIC_URI env var if not provided)
 
   Returns the connection.
 
   Example:
-    (init!)  ; Uses in-memory DB for testing
-    (init! \"datomic:dev://localhost:4334/finance\")  ; Production"
+    # In-memory (testing - NOT RECOMMENDED for production):
+    (init!)  ; Falls back to memory if DATOMIC_URI not set
+
+    # Persistent (production - RECOMMENDED):
+    # Set env: export DATOMIC_URI='datomic:dev://localhost:4334/finance'
+    (init!)  ; Reads from env
+
+    # Explicit URI:
+    (init! \"datomic:dev://localhost:4334/finance\")"
   ([]
-   (init! "datomic:mem://finance"))
+   ;; Config-driven default (Bug #13 fix)
+   ;; Priority: ENV var > Default (memory for backwards compat)
+   (let [default-uri (or (System/getenv "DATOMIC_URI")
+                        "datomic:mem://finance")]
+     (when (= default-uri "datomic:mem://finance")
+       (println "⚠️  WARNING: Using in-memory database - facts will be lost on restart!"))
+     (init! default-uri)))
   ([uri]
    (d/create-database uri)
    (let [conn (d/connect uri)]
