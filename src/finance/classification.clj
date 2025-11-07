@@ -6,7 +6,8 @@
   - Engine is generic (works with any rules)
   - Easy to add rules without code changes"
   (:require [clojure.java.io :as io]
-            [clojure.edn :as edn]))
+            [clojure.edn :as edn]
+            [clojure.pprint :as pp]))
 
 ;; ============================================================================
 ;; RULE LOADING
@@ -185,6 +186,61 @@
   ([txs rules]
    (mapv #(classify % rules) txs)))
 
+(defn classify-batch-v2
+  "Classify a batch of transactions using transducers (Rich Hickey pattern).
+
+  BEFORE (classify-batch): Uses mapv (creates intermediate collection)
+  AFTER (classify-batch-v2): Uses transducers (single-pass, no intermediates)
+
+  Rich Hickey principles:
+  1. Composition before execution
+  2. Context independence (works with into, sequence, transduce, async/pipeline)
+  3. Single-pass transformation
+  4. Separation of LOGIC (classify) from APPLICATION (transducers)
+
+  Args:
+    txs - Collection of transactions
+    rules - (optional) Vector of rules
+    opts - (optional) Options:
+           :min-confidence - Filter level (:high/:medium/:low/:any, default :any)
+           :version - Classification version (default \"1.0.0\")
+
+  Returns vector of classified transactions.
+
+  Example:
+    (classify-batch-v2 transactions)
+    (classify-batch-v2 transactions rules {:min-confidence :high})
+
+  Performance:
+    BEFORE: N transactions × (classify + vector allocation) = N+1 allocations
+    AFTER:  N transactions → single-pass pipeline = 1 allocation"
+  ([txs]
+   (classify-batch-v2 txs (get-default-rules) {}))
+  ([txs rules]
+   (classify-batch-v2 txs rules {}))
+  ([txs rules {:keys [min-confidence version] :or {min-confidence :any version "1.0.0"}}]
+   (let [classify-fn #(classify % rules)
+         pipeline (if (= min-confidence :any)
+                   ;; No filtering
+                   (comp
+                     (map classify-fn)
+                     (map #(assoc %
+                             :classified-at (java.util.Date.)
+                             :classification-version version)))
+                   ;; With confidence filtering
+                   (comp
+                     (map classify-fn)
+                     ;; Filter by confidence
+                     (filter (case min-confidence
+                              :high   (fn [tx] (>= (or (:confidence tx) 0.0) 0.9))
+                              :medium (fn [tx] (let [c (or (:confidence tx) 0.0)]
+                                                (and (>= c 0.7) (< c 0.9))))
+                              :low    (fn [tx] (< (or (:confidence tx) 0.0) 0.7))))
+                     (map #(assoc %
+                             :classified-at (java.util.Date.)
+                             :classification-version version))))]
+     (into [] pipeline txs))))
+
 ;; ============================================================================
 ;; CONFIDENCE FILTERING
 ;; ============================================================================
@@ -338,7 +394,7 @@
   Example:
     (save-rules rules \"resources/rules/merchant-rules.edn\")"
   [rules file-path]
-  (spit file-path (with-out-str (clojure.pprint/pprint rules))))
+  (spit file-path (with-out-str (pp/pprint rules))))
 
 ;; ============================================================================
 ;; EXAMPLE USAGE (for documentation)

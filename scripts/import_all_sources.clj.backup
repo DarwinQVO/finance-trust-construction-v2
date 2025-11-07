@@ -23,8 +23,7 @@
             [trust.datomic-schema :as schema]
             [trust.identity-datomic :as identity]
             [trust.events-datomic :as events]
-            [finance.entities :as entities]
-            [finance.transducers :as xf])
+            [finance.entities :as entities])
   (:import [java.text SimpleDateFormat]
            [java.security MessageDigest]))
 
@@ -263,47 +262,6 @@
 
     (str "tx-" (subs hash-hex 0 16))))
 
-(defn csv-row-to-map
-  "Convert CSV row vector to map for transducer processing.
-
-  This is an adapter function that bridges CSV parsing (vector-based)
-  with transducer pipeline (map-based).
-
-  Rich Hickey principle: Separate FORMAT (CSV vector) from LOGIC (transducers).
-
-  CSV columns (0-indexed):
-  0: Date              → :date
-  1: Description       → :description
-  2: Amount_Original   → (fallback for :amount)
-  3: Amount_Numeric    → :amount
-  4: Transaction_Type  → :type
-  5: Category          → :category
-  6: Merchant          → :merchant
-  7: Currency          → :currency
-  8: Account_Name      → :account-name
-  9: Account_Number    → :account-number
-  10: Bank             → :bank
-  11: Source_File      → :source-file
-  12: Line_Number      → :source-line
-  13: Classification_Notes → :notes"
-  [row idx]
-  (when (>= (count row) 11)  ; At least basic fields
-    {:date (nth row 0 nil)
-     :description (nth row 1 nil)
-     :amount (or (nth row 3 nil) (nth row 2 nil))  ; Prefer Amount_Numeric, fallback to Amount_Original
-     :type (nth row 4 nil)
-     :category (nth row 5 nil)
-     :merchant (or (nth row 6 nil) (nth row 1 nil))  ; Fallback to description
-     :currency (nth row 7 nil)
-     :account-name (nth row 8 nil)
-     :account-number (nth row 9 nil)
-     :bank (nth row 10 nil)
-     :source-file (or (nth row 11 nil) "transactions_ALL_SOURCES.csv")
-     :source-line (if-let [line-num (nth row 12 nil)]
-                    (try (Integer/parseInt line-num) (catch Exception _ idx))
-                    idx)
-     :notes (nth row 13 nil)}))
-
 (defn parse-csv-row
   "Parse a single CSV row into transaction map.
 
@@ -354,63 +312,6 @@
        :confidence (if (and category (not= category ""))
                     0.85  ; Has category from CSV
                     0.0)})))  ; No category
-
-(defn parse-csv-row-v2
-  "Parse CSV row using transducers (Rich Hickey pattern).
-
-  BEFORE (parse-csv-row): Imperative step-by-step parsing
-  AFTER (parse-csv-row-v2): Declarative transducer pipeline
-
-  Rich Hickey principles demonstrated:
-  1. Composition BEFORE execution - pipeline defined once, applied many times
-  2. Context independence - transducers work with any reducing context
-  3. Single-pass transformation - no intermediate collections
-  4. Separation of concerns - parsing logic separate from iteration
-
-  Pipeline stages:
-  1. csv-row-to-map: CSV vector → map
-  2. parse-date-xf: String date → java.util.Date
-  3. parse-amount-xf: String amount → Double
-  4. normalize-type-xf: String type → keyword
-  5. normalize-bank-xf: String bank → keyword
-  6. normalize-merchant-xf: String merchant → keyword
-  7. normalize-category-xf: String category → keyword
-  8. compute-deterministic-id-xf: Generate SHA-256 based ID
-  9. filter-errors-xf: Remove invalid records
-  10. Add remaining fields: currency, confidence"
-  [row idx]
-  (when-let [csv-map (csv-row-to-map row idx)]
-    ;; Define transducer pipeline (composable, reusable)
-    (let [pipeline (comp
-                     (xf/parse-date-xf :date)
-                     (xf/parse-amount-xf :amount)
-                     (xf/normalize-type-xf :type)
-                     (xf/normalize-bank-xf :bank)
-                     (xf/normalize-merchant-xf :merchant)
-                     (xf/normalize-category-xf :category)
-                     (xf/compute-deterministic-id-xf)
-                     (xf/filter-errors-xf)
-                     (xf/filter-valid-amount-xf :amount)
-                     (xf/filter-valid-date-xf :date))
-
-          ;; Execute pipeline (single pass!)
-          result (first (into [] pipeline [csv-map]))]
-
-      (when result
-        ;; Add fields not handled by transducers
-        (assoc result
-          ;; Rename for Datomic compatibility
-          :category-id (:category result)
-          :merchant-id (:merchant result)
-
-          ;; Add currency (default USD)
-          :currency (or (:currency result) "USD")
-
-          ;; Compute confidence (has category from CSV?)
-          :confidence (if (and (:raw-category result)
-                              (not= (:raw-category result) ""))
-                       0.85  ; Has category from CSV
-                       0.0))))))  ; No category
 
 ;; ============================================================================
 ;; IMPORT

@@ -3,10 +3,12 @@
         org.clojure/spec.alpha {:mvn/version "0.3.218"}
         org.clojure/core.async {:mvn/version "1.6.681"}
 
-        ;; Data processing
-        ;; Validation: Using Spec.alpha (official Clojure, not Malli)
-        ;; Removed malli - redundant with spec.alpha, creates confusion
-        metosin/spec-tools {:mvn/version "0.10.6"}
+        ;; Data processing & Validation
+        ;; Phase 5.1: Added Malli for schemas-as-data (Rich Hickey aligned)
+        ;; Malli: Better performance, data-driven schemas, JSON Schema generation
+        ;; Keeping spec.alpha for backward compatibility (gradual migration)
+        metosin/malli {:mvn/version "0.13.0"}              ; Schemas as data
+        metosin/spec-tools {:mvn/version "0.10.6"}         ; Spec utilities
         clojure.java-time/clojure.java-time {:mvn/version "1.4.2"}
 
         ;; CSV/JSON parsing
@@ -43,7 +45,8 @@
   :test {:extra-paths ["test"]
          :extra-deps {io.github.cognitect-labs/test-runner {:git/tag "v0.5.1"
                                                               :git/sha "dfb30dd"}
-                      lambdaisland/kaocha {:mvn/version "1.87.1366"}}
+                      lambdaisland/kaocha {:mvn/version "1.87.1366"}
+                      com.gfredericks/test.chuck {:mvn/version "0.2.14"}}  ; Regex generators for Malli
          :main-opts ["-m" "cognitect.test-runner"]
          :exec-fn cognitect.test-runner.api/test}
 

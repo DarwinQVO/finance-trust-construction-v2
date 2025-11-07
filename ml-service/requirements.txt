@@ -1,0 +1,18 @@
+# Python ML Service Dependencies
+# Phase 2: Python ML Service
+# Date: 2025-11-06
+
+# Web Framework
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+pydantic==2.5.0
+
+# HTTP Client (for future LLM integration)
+httpx==0.26.0
+
+# Statistics (built-in, but explicit for clarity)
+# statistics is stdlib
+
+# Development
+pytest==7.4.4
+pytest-asyncio==0.23.3

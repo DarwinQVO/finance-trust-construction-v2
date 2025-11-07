@@ -1,6 +1,16 @@
 (ns finance.core-datomic
   "Main API for finance domain with Datomic backend.
 
+  ⚡ PHASE 4: PROCESS/PERCEPTION SEPARATION (Rich Hickey Aligned) ⚡
+
+  This namespace now separates:
+  - PROCESS (writes) - All mutations go to finance.process
+  - PERCEPTION (reads) - All queries go to finance.perception
+
+  Rich Hickey Principle:
+  'Information systems conflate process and perception. Database updates are
+   process. Queries are perception. Keep them separate.'
+
   This is the PRODUCTION version using Datomic for:
   - Persistent storage (survives restarts)
   - Time-travel queries (d/as-of)
@@ -8,10 +18,8 @@
   - ACID transactions
 
   High-level operations:
-  - Importing transactions from various sources
-  - Classifying transactions
-  - Reconciling balances
-  - Querying transaction data"
+  - PROCESS: Importing, classifying, correcting (finance.process)
+  - PERCEPTION: Querying, aggregating, filtering (finance.perception)"
   (:require [datomic.api :as d]
             [trust.datomic-schema :as schema]
             [trust.events-datomic :as events]
@@ -23,6 +31,8 @@
             [finance.parsers.wise :as wise]
             [finance.classification :as classify]
             [finance.reconciliation :as reconcile]
+            [finance.process :as process]
+            [finance.perception :as perception]
             [clojure.java.io :as io]))
 
 ;; ============================================================================
@@ -338,92 +348,64 @@
      result)))
 
 ;; ============================================================================
-;; QUERIES
+;; QUERIES (PERCEPTION Layer)
+;; ============================================================================
+;;
+;; ⚡ MIGRATION NOTE: These functions are now DEPRECATED.
+;; Use finance.perception namespace instead for all queries.
+;;
+;; OLD (Conflates process/perception):
+;;   (finance.core-datomic/get-all-transactions)
+;;
+;; NEW (Separated):
+;;   (finance.perception/get-all-transactions (finance.core-datomic/get-db))
+;;
+;; Why? Rich Hickey: "Separate process (writes) from perception (reads)"
 ;; ============================================================================
 
 (defn get-all-transactions
-  "Get all transactions from Datomic."
+  "Get all transactions from Datomic.
+
+  DEPRECATED: Use finance.perception/get-all-transactions instead.
+
+  This function is kept for backward compatibility but will be removed.
+  The new API separates reads (perception) from writes (process)."
   []
-  (let [db (get-db)
-        eids (d/q '[:find [?e ...]
-                    :where [?e :transaction/id]]
-                  db)]
-    (map #(d/touch (d/entity db %)) eids)))
+  (perception/get-all-transactions (get-db)))
 
 (defn count-transactions
-  "Count total transactions."
+  "Count total transactions.
+
+  DEPRECATED: Use finance.perception/count-transactions instead."
   []
-  (d/q '[:find (count ?e) .
-         :where [?e :transaction/id]]
-       (get-db)))
+  (perception/count-transactions (get-db)))
 
 (defn transactions-by-type
-  "Get transactions of a specific type."
+  "Get transactions of a specific type.
+
+  DEPRECATED: Use finance.perception/transactions-by-type instead."
   [tx-type]
-  (let [db (get-db)
-        eids (d/q '[:find [?e ...]
-                    :in $ ?type
-                    :where
-                    [?e :transaction/id]
-                    [?e :transaction/type ?type]]
-                  db
-                  tx-type)]
-    (map #(d/touch (d/entity db %)) eids)))
+  (perception/transactions-by-type (get-db) tx-type))
 
 (defn transactions-in-range
-  "Get transactions within a date range."
+  "Get transactions within a date range.
+
+  DEPRECATED: Use finance.perception/transactions-in-range instead."
   [start-date end-date]
-  (let [db (get-db)
-        eids (d/q '[:find [?e ...]
-                    :in $ ?start ?end
-                    :where
-                    [?e :transaction/id]
-                    [?e :transaction/date ?date]
-                    [(<= ?start ?date)]
-                    [(< ?date ?end)]]
-                  db
-                  start-date
-                  end-date)]
-    (map #(d/touch (d/entity db %)) eids)))
+  (perception/transactions-in-range (get-db) start-date end-date))
 
 ;; ============================================================================
-;; STATISTICS
+;; STATISTICS (PERCEPTION Layer)
 ;; ============================================================================
 
 (defn transaction-stats
   "Calculate transaction statistics.
 
+  DEPRECATED: Use finance.perception/transaction-statistics instead.
+
   Returns {:total N :by-type {...} :total-income X :total-expenses Y}"
   []
-  (let [db (get-db)
-
-        total (count-transactions)
-
-        by-type (d/q '[:find ?type (count ?e)
-                       :where
-                       [?e :transaction/id]
-                       [?e :transaction/type ?type]]
-                     db)
-
-        total-income (or (d/q '[:find (sum ?amount) .
-                                :where
-                                [?e :transaction/type :income]
-                                [?e :transaction/amount ?amount]]
-                              db)
-                         0.0)
-
-        total-expenses (or (d/q '[:find (sum ?amount) .
-                                  :where
-                                  [?e :transaction/type :expense]
-                                  [?e :transaction/amount ?amount]]
-                                db)
-                           0.0)]
-
-    {:total total
-     :by-type (into {} by-type)
-     :total-income total-income
-     :total-expenses total-expenses
-     :net-cashflow (- total-income total-expenses)}))
+  (perception/transaction-statistics (get-db)))
 
 ;; ============================================================================
 ;; TIME-TRAVEL

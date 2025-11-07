@@ -1,0 +1,109 @@
+# Docker Compose for Finance Trust Construction v2.0
+# Phase 4: Deployment
+# Date: 2025-11-06
+#
+# Services:
+# - clojure-api: Clojure REST API + ML orchestration
+# - python-ml: Python ML service (merchant/category detection)
+# - datomic-free: Datomic Free database
+#
+# Usage:
+#   docker-compose up          # Start all services
+#   docker-compose down        # Stop all services
+#   docker-compose logs -f     # Follow logs
+#   docker-compose ps          # List running services
+
+version: '3.8'
+
+services:
+  # ============================================================================
+  # Datomic Free Database
+  # ============================================================================
+  datomic:
+    image: akiel/datomic-free:0.9.5697
+    container_name: finance-datomic
+    ports:
+      - "4334:4334"  # Transactor port
+      - "4335:4335"  # Peer server port (if needed)
+    environment:
+      - DATOMIC_MEMORY_INDEX_MAX=256m
+      - DATOMIC_OBJECT_CACHE_MAX=128m
+    volumes:
+      - datomic-data:/var/datomic/data
+    networks:
+      - finance-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "4334"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ============================================================================
+  # Python ML Service
+  # ============================================================================
+  python-ml:
+    build:
+      context: ./ml-service
+      dockerfile: Dockerfile
+    container_name: finance-python-ml
+    ports:
+      - "8000:8000"  # FastAPI port
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=info
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}  # Optional: set in .env file
+    networks:
+      - finance-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    depends_on:
+      - datomic
+
+  # ============================================================================
+  # Clojure API Server
+  # ============================================================================
+  clojure-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: finance-clojure-api
+    ports:
+      - "3000:3000"  # REST API port
+    environment:
+      - DATOMIC_URI=datomic:free://datomic:4334/finance
+      - ML_SERVICE_URL=http://python-ml:8000
+      - LOG_LEVEL=info
+      - PORT=3000
+    networks:
+      - finance-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/v1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    depends_on:
+      datomic:
+        condition: service_healthy
+      python-ml:
+        condition: service_healthy
+
+# ============================================================================
+# Networks
+# ============================================================================
+networks:
+  finance-network:
+    driver: bridge
+    name: finance-network
+
+# ============================================================================
+# Volumes
+# ============================================================================
+volumes:
+  datomic-data:
+    name: finance-datomic-data
