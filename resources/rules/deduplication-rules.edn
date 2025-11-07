@@ -1,0 +1,196 @@
+[
+ ;; ========================================================================
+ ;; DEDUPLICATION RULES
+ ;; ========================================================================
+ ;;
+ ;; Rules define how to detect duplicate transactions.
+ ;; Multiple strategies can be active simultaneously.
+ ;;
+ ;; Each rule specifies:
+ ;; - :id - Unique identifier for the rule
+ ;; - :strategy - Detection strategy (:exact-match, :fuzzy-match, :time-window)
+ ;; - :fields - Fields to compare
+ ;; - :tolerance - Matching tolerance (for fuzzy/time-window)
+ ;; - :priority - Higher priority rules are checked first
+ ;; - :confidence - How confident we are this is a duplicate (0.0-1.0)
+ ;; - :enabled - Whether rule is active
+ ;;
+ ;; Version: 1.0.0
+ ;; Last updated: 2025-11-07
+ ;; ========================================================================
+
+ ;; ========================================================================
+ ;; EXACT MATCH STRATEGIES
+ ;; ========================================================================
+
+ {:id :exact-match-all-fields
+  :description "Exact match on all core fields (most strict)"
+  :strategy :exact-match
+  :fields [:date :amount :merchant :bank :description]
+  :priority 100
+  :confidence 1.0
+  :enabled true
+  :version "1.0.0"}
+
+ {:id :exact-match-core-fields
+  :description "Exact match on date + amount + merchant (standard)"
+  :strategy :exact-match
+  :fields [:date :amount :merchant]
+  :priority 90
+  :confidence 0.98
+  :enabled true
+  :version "1.0.0"}
+
+ {:id :exact-match-with-bank
+  :description "Exact match on date + amount + merchant + bank"
+  :strategy :exact-match
+  :fields [:date :amount :merchant :bank]
+  :priority 95
+  :confidence 0.99
+  :enabled true
+  :version "1.0.0"}
+
+ {:id :exact-match-hash
+  :description "SHA-256 hash match (current implementation)"
+  :strategy :hash-match
+  :fields [:date :amount :merchant :bank]
+  :hash-algorithm :sha-256
+  :priority 85
+  :confidence 0.98
+  :enabled true
+  :version "1.0.0"}
+
+ ;; ========================================================================
+ ;; FUZZY MATCH STRATEGIES
+ ;; ========================================================================
+
+ {:id :fuzzy-amount-tolerance
+  :description "Same date/merchant, amount within $0.01"
+  :strategy :fuzzy-match
+  :fields [:date :merchant]
+  :fuzzy-fields {:amount {:tolerance 0.01 :type :absolute}}
+  :priority 70
+  :confidence 0.90
+  :enabled true
+  :version "1.0.0"}
+
+ {:id :fuzzy-merchant-levenshtein
+  :description "Same date/amount, merchant similar (Levenshtein distance <= 3)"
+  :strategy :fuzzy-match
+  :fields [:date :amount]
+  :fuzzy-fields {:merchant {:tolerance 3 :type :levenshtein}}
+  :priority 60
+  :confidence 0.85
+  :enabled false
+  :version "1.0.0"
+  :notes "Disabled by default - can cause false positives"}
+
+ ;; ========================================================================
+ ;; TIME WINDOW STRATEGIES
+ ;; ========================================================================
+
+ {:id :same-day-same-merchant
+  :description "Same merchant, same amount, within 24 hours"
+  :strategy :time-window
+  :fields [:merchant :amount]
+  :time-window {:amount 24 :unit :hours}
+  :priority 50
+  :confidence 0.80
+  :enabled true
+  :version "1.0.0"}
+
+ {:id :pending-vs-posted
+  :description "Pending transaction followed by posted (3 day window)"
+  :strategy :time-window
+  :fields [:merchant :amount]
+  :time-window {:amount 3 :unit :days}
+  :type-transition [:pending :posted]
+  :priority 80
+  :confidence 0.95
+  :enabled true
+  :version "1.0.0"
+  :notes "Common pattern: pending charge becomes posted charge"}
+
+ {:id :refund-detection
+  :description "Refund matches charge with opposite sign (30 day window)"
+  :strategy :time-window
+  :fields [:merchant]
+  :amount-relationship :opposite-sign
+  :time-window {:amount 30 :unit :days}
+  :priority 75
+  :confidence 0.90
+  :enabled true
+  :version "1.0.0"}
+
+ ;; ========================================================================
+ ;; CROSS-SOURCE STRATEGIES
+ ;; ========================================================================
+
+ {:id :cross-source-exact
+  :description "Exact match across different data sources"
+  :strategy :cross-source
+  :fields [:date :amount :merchant]
+  :require-different-sources true
+  :priority 65
+  :confidence 0.92
+  :enabled true
+  :version "1.0.0"
+  :notes "Common for credit card + bank account showing same purchase"}
+
+ {:id :transfer-matching
+  :description "Matching transfers between accounts (opposite sign)"
+  :strategy :transfer-match
+  :fields [:date :amount]
+  :amount-relationship :opposite-sign
+  :category-hint :transfer
+  :time-window {:amount 1 :unit :days}
+  :priority 85
+  :confidence 0.95
+  :enabled true
+  :version "1.0.0"
+  :notes "Transfers show as negative in source, positive in destination"}
+
+ ;; ========================================================================
+ ;; BANK-SPECIFIC STRATEGIES
+ ;; ========================================================================
+
+ {:id :stripe-internal-transfers
+  :description "Stripe payout = transfer to bank (match by amount + date)"
+  :strategy :bank-specific
+  :source-bank :stripe
+  :target-bank [:bofa :wise]
+  :fields [:date :amount]
+  :time-window {:amount 2 :unit :days}
+  :priority 70
+  :confidence 0.88
+  :enabled true
+  :version "1.0.0"}
+
+ {:id :credit-card-payment-matching
+  :description "Credit card payment matches charge summary"
+  :strategy :bank-specific
+  :source-bank :bofa
+  :target-bank [:apple-card]
+  :fields [:date]
+  :match-type :sum-of-charges
+  :time-window {:amount 5 :unit :days}
+  :priority 65
+  :confidence 0.85
+  :enabled false
+  :version "1.0.0"
+  :notes "Complex - needs aggregation logic, disabled for now"}
+
+ ;; ========================================================================
+ ;; METADATA RULES
+ ;; ========================================================================
+
+ {:id :rule-metadata
+  :version "1.0.0"
+  :created-at "2025-11-07T14:00:00Z"
+  :created-by "system"
+  :last-modified-at "2025-11-07T14:00:00Z"
+  :last-modified-by "system"
+  :active-rules 13
+  :disabled-rules 2
+  :notes "Initial deduplication rules - covers common patterns"}
+]

@@ -1,0 +1,244 @@
+[
+ ;; ========================================================================
+ ;; RESTAURANTS & FOOD
+ ;; ========================================================================
+ {:id :starbucks-exact
+  :pattern "STARBUCKS"
+  :merchant :starbucks
+  :category :restaurants
+  :type :expense
+  :confidence 0.98
+  :description "Starbucks coffee shop - exact match"
+  :priority 20}
+
+ {:id :starbucks-prefix
+  :pattern #"STARBUCKS.*"
+  :merchant :starbucks
+  :category :restaurants
+  :type :expense
+  :confidence 0.95
+  :description "Starbucks with location suffix"
+  :priority 15}
+
+ {:id :whole-foods
+  :pattern #"WHOLE FOODS.*"
+  :merchant :whole-foods
+  :category :groceries
+  :type :expense
+  :confidence 0.95
+  :description "Whole Foods grocery store"
+  :priority 15}
+
+ {:id :chipotle
+  :pattern #"CHIPOTLE.*"
+  :merchant :chipotle
+  :category :restaurants
+  :type :expense
+  :confidence 0.95
+  :description "Chipotle restaurant"
+  :priority 15}
+
+ ;; ========================================================================
+ ;; SHOPPING
+ ;; ========================================================================
+ {:id :amazon-exact
+  :pattern "AMAZON"
+  :merchant :amazon
+  :category :shopping
+  :type :expense
+  :confidence 0.98
+  :description "Amazon - exact match"
+  :priority 20}
+
+ {:id :amazon-prefix
+  :pattern #"AMAZON.*"
+  :merchant :amazon
+  :category :shopping
+  :type :expense
+  :confidence 0.95
+  :description "Amazon with suffix"
+  :priority 15}
+
+ {:id :amzn
+  :pattern #"AMZN.*"
+  :merchant :amazon
+  :category :shopping
+  :type :expense
+  :confidence 0.90
+  :description "Amazon abbreviated"
+  :priority 10}
+
+ {:id :target
+  :pattern #"TARGET.*"
+  :merchant :target
+  :category :shopping
+  :type :expense
+  :confidence 0.95
+  :description "Target store"
+  :priority 15}
+
+ {:id :apple-store
+  :pattern #"APPLE\.COM.*"
+  :merchant :apple-store
+  :category :shopping
+  :type :expense
+  :confidence 0.95
+  :description "Apple online store"
+  :priority 15}
+
+ ;; ========================================================================
+ ;; TRANSPORTATION
+ ;; ========================================================================
+ {:id :uber-exact
+  :pattern "UBER"
+  :merchant :uber
+  :category :transportation
+  :type :expense
+  :confidence 0.98
+  :description "Uber ride"
+  :priority 20}
+
+ {:id :uber-trip
+  :pattern #"UBER \* TRIP"
+  :merchant :uber
+  :category :transportation
+  :type :expense
+  :confidence 0.98
+  :description "Uber trip"
+  :priority 20}
+
+ {:id :lyft
+  :pattern #"LYFT.*"
+  :merchant :lyft
+  :category :transportation
+  :type :expense
+  :confidence 0.95
+  :description "Lyft ride"
+  :priority 15}
+
+ ;; ========================================================================
+ ;; ENTERTAINMENT
+ ;; ========================================================================
+ {:id :netflix
+  :pattern #"NETFLIX.*"
+  :merchant :netflix
+  :category :entertainment
+  :type :expense
+  :confidence 0.98
+  :description "Netflix subscription"
+  :priority 20}
+
+ {:id :spotify
+  :pattern #"SPOTIFY.*"
+  :merchant :spotify
+  :category :entertainment
+  :type :expense
+  :confidence 0.98
+  :description "Spotify subscription"
+  :priority 20}
+
+ ;; ========================================================================
+ ;; PHARMACY
+ ;; ========================================================================
+ {:id :cvs
+  :pattern #"CVS.*"
+  :merchant :cvs
+  :category :pharmacy
+  :type :expense
+  :confidence 0.95
+  :description "CVS Pharmacy"
+  :priority 15}
+
+ {:id :walgreens
+  :pattern #"WALGREENS.*"
+  :merchant :walgreens
+  :category :pharmacy
+  :type :expense
+  :confidence 0.95
+  :description "Walgreens Pharmacy"
+  :priority 15}
+
+ ;; ========================================================================
+ ;; INCOME
+ ;; ========================================================================
+ {:id :stripe-payment
+  :pattern #"Payment from.*"
+  :merchant :stripe
+  :category :freelance
+  :type :income
+  :confidence 0.90
+  :description "Stripe payment received"
+  :priority 10}
+
+ {:id :direct-deposit
+  :pattern #"DIRECT DEP.*"
+  :category :salary
+  :type :income
+  :confidence 0.85
+  :description "Direct deposit salary"
+  :priority 10}
+
+ {:id :payroll
+  :pattern #"PAYROLL.*"
+  :category :salary
+  :type :income
+  :confidence 0.85
+  :description "Payroll deposit"
+  :priority 10}
+
+ ;; ========================================================================
+ ;; TRANSFERS & PAYMENTS
+ ;; ========================================================================
+ {:id :credit-card-payment
+  :pattern #"CREDIT CARD PAYMENT.*"
+  :category :payment
+  :type :transfer
+  :confidence 0.98
+  :description "Credit card payment"
+  :priority 20}
+
+ {:id :payment-thank-you
+  :pattern #"PAYMENT - THANK YOU"
+  :category :payment
+  :type :transfer
+  :confidence 0.95
+  :description "Credit card payment confirmation"
+  :priority 15}
+
+ {:id :transfer
+  :pattern #"Transfer.*"
+  :category :transfer
+  :type :transfer
+  :confidence 0.90
+  :description "Generic transfer"
+  :priority 10}
+
+ ;; ========================================================================
+ ;; UTILITIES
+ ;; ========================================================================
+ {:id :pg-and-e
+  :pattern #"PG&E.*"
+  :merchant :pg-and-e
+  :category :utilities
+  :type :expense
+  :confidence 0.98
+  :description "Pacific Gas & Electric"
+  :priority 20}
+
+ {:id :at-and-t
+  :pattern #"AT&T.*"
+  :merchant :at-and-t
+  :category :utilities
+  :type :expense
+  :confidence 0.95
+  :description "AT&T phone/internet"
+  :priority 15}
+
+ {:id :comcast
+  :pattern #"COMCAST.*"
+  :merchant :comcast
+  :category :utilities
+  :type :expense
+  :confidence 0.95
+  :description "Comcast internet/cable"
+  :priority 15}]

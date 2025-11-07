@@ -1,0 +1,331 @@
+{:versions
+ {:deduplication-rules
+  [{:rule-type :deduplication-rules,
+    :timestamp "2025-11-07T14:58:34.106Z",
+    :author "system",
+    :reason "Badge 30: Initial versioning setup",
+    :notes "Deduplication detection rules",
+    :rule-count 14,
+    :path
+    "resources/rules/versions/deduplication-rules-v2025-11-07T14-58-34.106Z.edn"}
+   {:rule-type :deduplication-rules,
+    :timestamp "2025-11-07T15:05:59.861Z",
+    :author "system",
+    :reason "Badge 30: Rule versioning implementation",
+    :notes "Deduplication detection rules",
+    :rule-count 14,
+    :path
+    "resources/rules/versions/deduplication-rules-v2025-11-07T15-05-59.861Z.edn"}
+   {:rule-type :deduplication-rules,
+    :timestamp "2025-11-07T15:07:17.065Z",
+    :author "test-user",
+    :reason "Version 1",
+    :notes "Testing versioning system",
+    :rule-count 3,
+    :path
+    "resources/rules/versions/deduplication-rules-v2025-11-07T15-07-17.065Z.edn"}
+   {:rule-type :deduplication-rules,
+    :timestamp "2025-11-07T15:07:17.259Z",
+    :author "test-user",
+    :reason "Version 2",
+    :notes "Testing versioning system",
+    :rule-count 3,
+    :path
+    "resources/rules/versions/deduplication-rules-v2025-11-07T15-07-17.259Z.edn"}
+   {:rule-type :deduplication-rules,
+    :timestamp "2025-11-07T15:20:49Z",
+    :author "test-user",
+    :reason "Version 1",
+    :notes "Testing versioning system",
+    :rule-count 3,
+    :path
+    "resources/rules/versions/deduplication-rules-v2025-11-07T15-20-49Z.edn"}
+   {:rule-type :deduplication-rules,
+    :timestamp "2025-11-07T15:20:49.262Z",
+    :author "test-user",
+    :reason "Version 2",
+    :notes "Testing versioning system",
+    :rule-count 3,
+    :path
+    "resources/rules/versions/deduplication-rules-v2025-11-07T15-20-49.262Z.edn"}],
+  :merchant-rules
+  [{:rule-type :merchant-rules,
+    :timestamp "2025-11-07T15:05:58.848Z",
+    :author "system",
+    :reason "Badge 30: Rule versioning implementation",
+    :notes "Merchant classification rules",
+    :rule-count 25,
+    :path
+    "resources/rules/versions/merchant-rules-v2025-11-07T15-05-58.848Z.edn"}
+   {:rule-type :merchant-rules,
+    :timestamp "2025-11-07T15:07:15.231Z",
+    :author "test-user",
+    :reason "Version 1",
+    :notes "Testing versioning system",
+    :rule-count 3,
+    :path
+    "resources/rules/versions/merchant-rules-v2025-11-07T15-07-15.231Z.edn"}
+   {:rule-type :merchant-rules,
+    :timestamp "2025-11-07T15:07:15.780Z",
+    :author "test-user",
+    :reason "Version 2",
+    :notes "Testing versioning system",
+    :rule-count 3,
+    :path
+    "resources/rules/versions/merchant-rules-v2025-11-07T15-07-15.780Z.edn"}
+   {:rule-type :merchant-rules,
+    :timestamp "2025-11-07T15:07:16.006Z",
+    :author "test-user",
+    :reason "Testing audit trail",
+    :notes "Extra notes",
+    :rule-count 3,
+    :path
+    "resources/rules/versions/merchant-rules-v2025-11-07T15-07-16.006Z.edn"}
+   {:rule-type :merchant-rules,
+    :timestamp "2025-11-07T15:07:16.170Z",
+    :author "alice",
+    :reason "Version 1",
+    :notes nil,
+    :rule-count 3,
+    :path
+    "resources/rules/versions/merchant-rules-v2025-11-07T15-07-16.170Z.edn"}
+   {:rule-type :merchant-rules,
+    :timestamp "2025-11-07T15:07:16.415Z",
+    :author "bob",
+    :reason "Version 2",
+    :notes nil,
+    :rule-count 3,
+    :path
+    "resources/rules/versions/merchant-rules-v2025-11-07T15-07-16.415Z.edn"}
+   {:rule-type :merchant-rules,
+    :timestamp "2025-11-07T15:07:16.706Z",
+    :author "alice",
+    :reason "Version 3",
+    :notes nil,
+    :rule-count 3,
+    :path
+    "resources/rules/versions/merchant-rules-v2025-11-07T15-07-16.706Z.edn"}
+   {:rule-type :merchant-rules,
+    :timestamp "2025-11-07T15:07:16.919Z",
+    :author "test-user",
+    :reason "Test version",
+    :notes "Testing versioning system",
+    :rule-count 3,
+    :path
+    "resources/rules/versions/merchant-rules-v2025-11-07T15-07-16.919Z.edn"}
+   {:rule-type :merchant-rules,
+    :timestamp "2025-11-07T15:07:17.369Z",
+    :author "test-user",
+    :reason "Version 1",
+    :notes "Testing versioning system",
+    :rule-count 3,
+    :path
+    "resources/rules/versions/merchant-rules-v2025-11-07T15-07-17.369Z.edn"}
+   {:rule-type :merchant-rules,
+    :timestamp "2025-11-07T15:07:17.592Z",
+    :author "test-user",
+    :reason "Version 2",
+    :notes "Testing versioning system",
+    :rule-count 3,
+    :path
+    "resources/rules/versions/merchant-rules-v2025-11-07T15-07-17.592Z.edn"}
+   {:rule-type :merchant-rules,
+    :timestamp "2025-11-07T15:07:17.886Z",
+    :author "test-user",
+    :reason "Version 3",
+    :notes "Testing versioning system",
+    :rule-count 3,
+    :path
+    "resources/rules/versions/merchant-rules-v2025-11-07T15-07-17.886Z.edn"}
+   {:rule-type :merchant-rules,
+    :timestamp "2025-11-07T15:07:18.010Z",
+    :author "test-user",
+    :reason "Test version",
+    :notes "Testing versioning system",
+    :rule-count 3,
+    :path
+    "resources/rules/versions/merchant-rules-v2025-11-07T15-07-18.010Z.edn"}
+   {:rule-type :merchant-rules,
+    :timestamp "2025-11-07T15:07:18.269Z",
+    :author "test-user",
+    :reason "Test version",
+    :notes "Testing versioning system",
+    :rule-count 3,
+    :path
+    "resources/rules/versions/merchant-rules-v2025-11-07T15-07-18.269Z.edn"}
+   {:rule-type :merchant-rules,
+    :timestamp "2025-11-07T15:07:18.416Z",
+    :author "test-user",
+    :reason "Version 1",
+    :notes "Testing versioning system",
+    :rule-count 3,
+    :path
+    "resources/rules/versions/merchant-rules-v2025-11-07T15-07-18.416Z.edn"}
+   {:rule-type :merchant-rules,
+    :timestamp "2025-11-07T15:07:18.664Z",
+    :author "test-user",
+    :reason "Version 2",
+    :notes "Testing versioning system",
+    :rule-count 3,
+    :path
+    "resources/rules/versions/merchant-rules-v2025-11-07T15-07-18.664Z.edn"}
+   {:rule-type :merchant-rules,
+    :timestamp "2025-11-07T15:07:18.877Z",
+    :author "test-user",
+    :reason "Version 1",
+    :notes "Testing versioning system",
+    :rule-count 3,
+    :path
+    "resources/rules/versions/merchant-rules-v2025-11-07T15-07-18.877Z.edn"}
+   {:rule-type :merchant-rules,
+    :timestamp "2025-11-07T15:07:19.184Z",
+    :author "test-user",
+    :reason "Version 2",
+    :notes "Testing versioning system",
+    :rule-count 3,
+    :path
+    "resources/rules/versions/merchant-rules-v2025-11-07T15-07-19.184Z.edn"}
+   {:rule-type :merchant-rules,
+    :timestamp "2025-11-07T15:07:19.552Z",
+    :author "test-user",
+    :reason "Rollback to v1",
+    :notes "Rolled back to version 2025-11-07T15:07:18.877Z",
+    :rule-count 3,
+    :path
+    "resources/rules/versions/merchant-rules-v2025-11-07T15-07-19.552Z.edn"}
+   {:rule-type :merchant-rules,
+    :timestamp "2025-11-07T15:20:46.619Z",
+    :author "test-user",
+    :reason "Version 1",
+    :notes "Testing versioning system",
+    :rule-count 3,
+    :path
+    "resources/rules/versions/merchant-rules-v2025-11-07T15-20-46.619Z.edn"}
+   {:rule-type :merchant-rules,
+    :timestamp "2025-11-07T15:20:47.584Z",
+    :author "test-user",
+    :reason "Version 2",
+    :notes "Testing versioning system",
+    :rule-count 3,
+    :path
+    "resources/rules/versions/merchant-rules-v2025-11-07T15-20-47.584Z.edn"}
+   {:rule-type :merchant-rules,
+    :timestamp "2025-11-07T15:20:47.961Z",
+    :author "test-user",
+    :reason "Testing audit trail",
+    :notes "Extra notes",
+    :rule-count 3,
+    :path
+    "resources/rules/versions/merchant-rules-v2025-11-07T15-20-47.961Z.edn"}
+   {:rule-type :merchant-rules,
+    :timestamp "2025-11-07T15:20:48.143Z",
+    :author "alice",
+    :reason "Version 1",
+    :notes nil,
+    :rule-count 3,
+    :path
+    "resources/rules/versions/merchant-rules-v2025-11-07T15-20-48.143Z.edn"}
+   {:rule-type :merchant-rules,
+    :timestamp "2025-11-07T15:20:48.387Z",
+    :author "bob",
+    :reason "Version 2",
+    :notes nil,
+    :rule-count 3,
+    :path
+    "resources/rules/versions/merchant-rules-v2025-11-07T15-20-48.387Z.edn"}
+   {:rule-type :merchant-rules,
+    :timestamp "2025-11-07T15:20:48.694Z",
+    :author "alice",
+    :reason "Version 3",
+    :notes nil,
+    :rule-count 3,
+    :path
+    "resources/rules/versions/merchant-rules-v2025-11-07T15-20-48.694Z.edn"}
+   {:rule-type :merchant-rules,
+    :timestamp "2025-11-07T15:20:48.868Z",
+    :author "test-user",
+    :reason "Test version",
+    :notes "Testing versioning system",
+    :rule-count 3,
+    :path
+    "resources/rules/versions/merchant-rules-v2025-11-07T15-20-48.868Z.edn"}
+   {:rule-type :merchant-rules,
+    :timestamp "2025-11-07T15:20:49.464Z",
+    :author "test-user",
+    :reason "Version 1",
+    :notes "Testing versioning system",
+    :rule-count 3,
+    :path
+    "resources/rules/versions/merchant-rules-v2025-11-07T15-20-49.464Z.edn"}
+   {:rule-type :merchant-rules,
+    :timestamp "2025-11-07T15:20:49.731Z",
+    :author "test-user",
+    :reason "Version 2",
+    :notes "Testing versioning system",
+    :rule-count 3,
+    :path
+    "resources/rules/versions/merchant-rules-v2025-11-07T15-20-49.731Z.edn"}
+   {:rule-type :merchant-rules,
+    :timestamp "2025-11-07T15:20:49.956Z",
+    :author "test-user",
+    :reason "Version 3",
+    :notes "Testing versioning system",
+    :rule-count 3,
+    :path
+    "resources/rules/versions/merchant-rules-v2025-11-07T15-20-49.956Z.edn"}
+   {:rule-type :merchant-rules,
+    :timestamp "2025-11-07T15:20:50.125Z",
+    :author "test-user",
+    :reason "Test version",
+    :notes "Testing versioning system",
+    :rule-count 3,
+    :path
+    "resources/rules/versions/merchant-rules-v2025-11-07T15-20-50.125Z.edn"}
+   {:rule-type :merchant-rules,
+    :timestamp "2025-11-07T15:20:50.404Z",
+    :author "test-user",
+    :reason "Test version",
+    :notes "Testing versioning system",
+    :rule-count 3,
+    :path
+    "resources/rules/versions/merchant-rules-v2025-11-07T15-20-50.404Z.edn"}
+   {:rule-type :merchant-rules,
+    :timestamp "2025-11-07T15:20:50.530Z",
+    :author "test-user",
+    :reason "Version 1",
+    :notes "Testing versioning system",
+    :rule-count 3,
+    :path
+    "resources/rules/versions/merchant-rules-v2025-11-07T15-20-50.530Z.edn"}
+   {:rule-type :merchant-rules,
+    :timestamp "2025-11-07T15:20:50.749Z",
+    :author "test-user",
+    :reason "Version 2",
+    :notes "Testing versioning system",
+    :rule-count 3,
+    :path
+    "resources/rules/versions/merchant-rules-v2025-11-07T15-20-50.749Z.edn"}
+   {:rule-type :merchant-rules,
+    :timestamp "2025-11-07T15:20:50.918Z",
+    :author "test-user",
+    :reason "Version 1",
+    :notes "Testing versioning system",
+    :rule-count 3,
+    :path
+    "resources/rules/versions/merchant-rules-v2025-11-07T15-20-50.918Z.edn"}
+   {:rule-type :merchant-rules,
+    :timestamp "2025-11-07T15:20:51.173Z",
+    :author "test-user",
+    :reason "Version 2",
+    :notes "Testing versioning system",
+    :rule-count 3,
+    :path
+    "resources/rules/versions/merchant-rules-v2025-11-07T15-20-51.173Z.edn"}
+   {:rule-type :merchant-rules,
+    :timestamp "2025-11-07T15:20:51.429Z",
+    :author "test-user",
+    :reason "Rollback to v1",
+    :notes "Rolled back to version 2025-11-07T15:20:50.918Z",
+    :rule-count 3,
+    :path
+    "resources/rules/versions/merchant-rules-v2025-11-07T15-20-51.429Z.edn"}]}}

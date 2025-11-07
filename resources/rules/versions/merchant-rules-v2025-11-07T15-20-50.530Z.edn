@@ -1,0 +1,9 @@
+[{:id :rule-1,
+  :pattern "STARBUCKS",
+  :category :restaurants,
+  :confidence 0.95}
+ {:id :rule-2, :pattern "AMAZON", :category :shopping, :confidence 0.9}
+ {:id :rule-3,
+  :pattern "UBER",
+  :category :transportation,
+  :confidence 0.98}]
