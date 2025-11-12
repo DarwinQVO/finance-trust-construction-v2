@@ -1,0 +1,2710 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merchant Classification System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f5f7fa;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+
+        /* Upload Section */
+        .upload-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .upload-area {
+            border: 2px dashed #bdc3c7;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upload-area:hover {
+            border-color: #3498db;
+            background: #f8f9fa;
+        }
+
+        .upload-area.dragging {
+            border-color: #27ae60;
+            background: #e8f5e9;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: #bdc3c7;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            color: #2c3e50;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .upload-hint {
+            color: #7f8c8d;
+            font-size: 12px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .processing-status {
+            display: none;
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .processing-status.active {
+            display: block;
+        }
+
+        /* Stats Section */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 13px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        /* Main Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 1400px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .badge {
+            background: #3498db;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* Pending List */
+        .pending-list {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .pending-item {
+            background: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .pending-item:hover {
+            background: #e9ecef;
+            transform: translateX(3px);
+        }
+
+        .pending-item.selected {
+            background: #e3f2fd;
+            border-color: #2196f3;
+        }
+
+        .pending-merchant-text {
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 15px;
+            color: #2c3e50;
+        }
+
+        .pending-details {
+            font-size: 12px;
+            color: #7f8c8d;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .pending-detail-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .pending-item-content {
+            flex: 1;
+            cursor: pointer;
+        }
+
+        .delete-button {
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            flex-shrink: 0;
+        }
+
+        .delete-button:hover {
+            background: #dc2626;
+        }
+
+        .delete-all-button {
+            background: #dc2626;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-left: auto;
+        }
+
+        .delete-all-button:hover {
+            background: #b91c1c;
+            transform: translateY(-1px);
+        }
+
+        .delete-all-button:active {
+            transform: translateY(0);
+        }
+
+        .delete-all-button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .card-header-flex {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        /* Provenance Section */
+        .provenance-section {
+            background: linear-gradient(135deg, #fff8e1 0%, #fffef7 100%);
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 6px;
+        }
+
+        .provenance-title {
+            font-weight: 600;
+            color: #f57c00;
+            margin-bottom: 15px;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .provenance-grid {
+            display: grid;
+            grid-template-columns: 140px 1fr;
+            gap: 12px;
+            font-size: 14px;
+        }
+
+        .provenance-label {
+            font-weight: 600;
+            color: #666;
+        }
+
+        .provenance-value {
+            color: #333;
+        }
+
+        .amount-highlight {
+            font-size: 24px;
+            font-weight: bold;
+            color: #e74c3c;
+        }
+
+        .description-box {
+            background: #ffffff;
+            padding: 12px;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin-top: 5px;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        /* Options Section */
+        .options-section {
+            margin-top: 25px;
+        }
+
+        .option-tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .option-tab {
+            padding: 18px;
+            background: #f8f9fa;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .option-tab:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .option-tab.active {
+            background: #2196f3;
+            color: white;
+            border-color: #1976d2;
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+
+        .option-tab-title {
+            font-weight: 600;
+            font-size: 15px;
+            margin-bottom: 6px;
+        }
+
+        .option-tab-desc {
+            font-size: 12px;
+            opacity: 0.85;
+        }
+
+        .option-content {
+            display: none;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .option-content.active {
+            display: block;
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #2c3e50;
+            font-size: 14px;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .btn-primary {
+            background: #2196f3;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1976d2;
+        }
+
+        .btn-success {
+            background: #4caf50;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #388e3c;
+        }
+
+        .btn-full {
+            width: 100%;
+        }
+
+        /* Alerts */
+        .alert {
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+
+        /* Merchants Table */
+        .merchants-section {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+
+        .merchants-table {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 10;
+        }
+
+        th {
+            background: #f8f9fa;
+            padding: 14px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: #2c3e50;
+            border-bottom: 2px solid #e0e0e0;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .tag {
+            display: inline-block;
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            margin: 2px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #7f8c8d;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 15px;
+            opacity: 0.3;
+        }
+
+        /* Scrollbar Styles */
+        .pending-list::-webkit-scrollbar,
+        .merchants-table::-webkit-scrollbar,
+        .description-box::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .pending-list::-webkit-scrollbar-track,
+        .merchants-table::-webkit-scrollbar-track,
+        .description-box::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .pending-list::-webkit-scrollbar-thumb,
+        .merchants-table::-webkit-scrollbar-thumb,
+        .description-box::-webkit-scrollbar-thumb {
+            background: #bdc3c7;
+            border-radius: 4px;
+        }
+
+        .pending-list::-webkit-scrollbar-thumb:hover,
+        .merchants-table::-webkit-scrollbar-thumb:hover,
+        .description-box::-webkit-scrollbar-thumb:hover {
+            background: #95a5a6;
+        }
+
+        /* Status Badges for Pipeline Results */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+
+        .status-resolved {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .status-unprocessed {
+            background: #e2e3e5;
+            color: #6c757d;
+            border: 1px solid #d3d3d4;
+        }
+
+        /* Type Badges (FASE 1) */
+        .type-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .badge-red {
+            background-color: #fee;
+            color: #c00;
+            border: 1px solid #fcc;
+        }
+
+        .badge-green {
+            background-color: #efe;
+            color: #070;
+            border: 1px solid #cfc;
+        }
+
+        .badge-blue {
+            background-color: #eef;
+            color: #007;
+            border: 1px solid #ccf;
+        }
+
+        .badge-orange {
+            background-color: #ffe;
+            color: #c60;
+            border: 1px solid #ffc;
+        }
+
+        .badge-purple {
+            background-color: #fef;
+            color: #707;
+            border: 1px solid #fcf;
+        }
+
+        .badge-gray {
+            background-color: #f5f5f5;
+            color: #666;
+            border: 1px solid #ddd;
+        }
+
+        .badge-yellow {
+            background-color: #ffc;
+            color: #660;
+            border: 1px solid #ff9;
+        }
+
+        .badge-unknown {
+            background-color: #eee;
+            color: #999;
+            border: 1px solid #ccc;
+        }
+
+        /* ============================================================================
+           TAB NAVIGATION
+           ============================================================================ */
+
+        .tabs-container {
+            margin: 20px 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .tabs-header {
+            display: flex;
+            border-bottom: 2px solid #e9ecef;
+            padding: 0;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 16px 24px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 500;
+            color: #6c757d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .tab-button:hover {
+            background: #f8f9fa;
+            color: #495057;
+        }
+
+        .tab-button.active {
+            color: #0066cc;
+            border-bottom-color: #0066cc;
+            background: #f0f7ff;
+        }
+
+        .tab-icon {
+            font-size: 18px;
+        }
+
+        .tab-badge {
+            background: #6c757d;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            min-width: 24px;
+            text-align: center;
+        }
+
+        .tab-button.active .tab-badge {
+            background: #0066cc;
+        }
+
+        /* Tab Content Containers */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .tab-header {
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .tab-header h2 {
+            margin-bottom: 8px;
+            font-size: 24px;
+            color: #2c3e50;
+        }
+
+        .tab-description {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+
+        /* ============================================================================
+           CATEGORIES TAB
+           ============================================================================ */
+
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .category-card {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .category-card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .category-icon {
+            font-size: 24px;
+        }
+
+        .category-card-header h3 {
+            flex: 1;
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #212529;
+        }
+
+        .category-count {
+            font-size: 12px;
+            color: #6c757d;
+            font-weight: 500;
+        }
+
+        .category-breakdown {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .category-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            transition: background 0.2s ease;
+        }
+
+        .category-item:hover {
+            background: #e9ecef;
+            cursor: pointer;
+        }
+
+        .category-item-name {
+            font-size: 14px;
+            color: #495057;
+            font-weight: 500;
+        }
+
+        .category-item-count {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .category-item-number {
+            font-size: 13px;
+            color: #6c757d;
+        }
+
+        .category-item-bar {
+            width: 60px;
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .category-item-bar-fill {
+            height: 100%;
+            background: #0066cc;
+            transition: width 0.3s ease;
+        }
+
+        /* Summary Card */
+        .summary-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .summary-card .category-card-header {
+            border-bottom-color: rgba(255,255,255,0.3);
+        }
+
+        .summary-card .category-icon,
+        .summary-card h3 {
+            color: white;
+        }
+
+        .summary-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        /* ============================================================================
+           HISTORY TAB
+           ============================================================================ */
+
+        .history-filters {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 150px;
+        }
+
+        .filter-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #495057;
+            text-transform: uppercase;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+            background: white;
+        }
+
+        .btn-clear-filters {
+            align-self: flex-end;
+            padding: 8px 16px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .btn-clear-filters:hover {
+            background: #5a6268;
+        }
+
+        .history-table-container {
+            overflow-x: auto;
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .history-table thead {
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .history-table th {
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+            color: #495057;
+            text-transform: uppercase;
+        }
+
+        .history-table td {
+            padding: 12px 16px;
+            font-size: 14px;
+            color: #212529;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .history-table tbody tr:hover {
+            background: #f8f9fa;
+            cursor: pointer;
+        }
+
+        .history-pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            margin-top: 20px;
+            padding: 16px;
+        }
+
+        .history-pagination button {
+            padding: 8px 16px;
+            background: white;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .history-pagination button:hover:not(:disabled) {
+            background: #f8f9fa;
+        }
+
+        .history-pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #page-info {
+            font-size: 14px;
+            color: #6c757d;
+        }
+
+        .confidence-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .confidence-high {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .confidence-medium {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .confidence-low {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .confidence-very-low {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Merchant Classification System</h1>
+            <p class="subtitle">Extract, classify, and manage merchant entities with complete provenance tracking</p>
+        </div>
+
+        <!-- Upload Section -->
+        <div class="upload-section">
+            <div class="card-title">PDF Upload</div>
+            <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+                <div class="upload-icon">&#8593;</div>
+                <div class="upload-text">Click to upload or drag and drop PDF</div>
+                <div class="upload-hint">Bank statement PDFs will be automatically processed</div>
+            </div>
+            <input type="file" id="fileInput" accept=".pdf" onchange="handleFileSelect(event)">
+
+            <div id="processingStatus" class="processing-status">
+                <strong>Processing...</strong>
+                <div id="processingMessage">Uploading PDF and extracting transactions...</div>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-label">Pending Review</div>
+                <div class="stat-value" id="stat-pending">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Merchants</div>
+                <div class="stat-value" id="stat-total">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Variations</div>
+                <div class="stat-value" id="stat-variations">-</div>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="tabs-container">
+            <div class="tabs-header">
+                <button class="tab-button active" data-tab="merchants" onclick="switchTab('merchants')">
+                    <span class="tab-icon">👥</span>
+                    Merchants
+                    <span class="tab-badge" id="merchants-count">0</span>
+                </button>
+                <button class="tab-button" data-tab="categories" onclick="switchTab('categories')">
+                    <span class="tab-icon">📊</span>
+                    Categories
+                </button>
+                <button class="tab-button" data-tab="history" onclick="switchTab('history')">
+                    <span class="tab-icon">📜</span>
+                    History
+                    <span class="tab-badge" id="history-count">0</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Merchants Tab Content -->
+        <div id="merchants-tab" class="tab-content active">
+            <div class="tab-header">
+                <h2>Pending Merchants for Review</h2>
+                <p class="tab-description">Review and verify merchant categorizations below</p>
+            </div>
+
+            <!-- Main Grid -->
+            <div class="main-grid">
+            <!-- Left: Pending List -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-header-flex">
+                        <div class="card-title">
+                            Pending Review
+                            <span class="badge" id="pending-count">0</span>
+                        </div>
+                        <button id="delete-all-btn" class="delete-all-button" onclick="deleteAllPending()" style="display: none;">
+                            Delete All
+                        </button>
+                    </div>
+                </div>
+                <div id="pending-list" class="pending-list"></div>
+            </div>
+
+            <!-- Right: Detail + Classification -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Classification</div>
+                </div>
+                <div id="alert-container"></div>
+                <div id="detail-section"></div>
+            </div>
+        </div>
+        </div>
+        </div>
+
+        <!-- Categories Tab Content -->
+        <div id="categories-tab" class="tab-content">
+            <div class="tab-header">
+                <h2>Multi-Dimensional Category Breakdown</h2>
+                <p class="tab-description">6 dimensions of transaction categorization</p>
+            </div>
+
+            <div class="categories-grid">
+                <!-- Dimension 1: Budget Categories -->
+                <div class="category-card">
+                    <div class="category-card-header">
+                        <span class="category-icon">💰</span>
+                        <h3>Budget Categories</h3>
+                        <span class="category-count" id="budget-total">0 txs</span>
+                    </div>
+                    <div class="category-breakdown" id="budget-breakdown">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Dimension 2: Tax Categories -->
+                <div class="category-card">
+                    <div class="category-card-header">
+                        <span class="category-icon">📋</span>
+                        <h3>Tax Categories</h3>
+                        <span class="category-count" id="tax-total">0 txs</span>
+                    </div>
+                    <div class="category-breakdown" id="tax-breakdown">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Dimension 3: Payment Methods -->
+                <div class="category-card">
+                    <div class="category-card-header">
+                        <span class="category-icon">💳</span>
+                        <h3>Payment Methods</h3>
+                        <span class="category-count" id="payment-total">0 txs</span>
+                    </div>
+                    <div class="category-breakdown" id="payment-breakdown">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Dimension 4: Accounting Categories -->
+                <div class="category-card">
+                    <div class="category-card-header">
+                        <span class="category-icon">📊</span>
+                        <h3>Accounting Categories</h3>
+                        <span class="category-count" id="accounting-total">0 txs</span>
+                    </div>
+                    <div class="category-breakdown" id="accounting-breakdown">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Dimension 5: Merchant Categories -->
+                <div class="category-card">
+                    <div class="category-card-header">
+                        <span class="category-icon">🏪</span>
+                        <h3>Merchant Categories (MCC)</h3>
+                        <span class="category-count" id="merchant-cat-total">0 txs</span>
+                    </div>
+                    <div class="category-breakdown" id="merchant-cat-breakdown">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Dimension 6: Summary Stats -->
+                <div class="category-card summary-card">
+                    <div class="category-card-header">
+                        <span class="category-icon">📈</span>
+                        <h3>Resolution Summary</h3>
+                    </div>
+                    <div class="summary-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Total Transactions</span>
+                            <span class="stat-value" id="total-txs">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Resolved</span>
+                            <span class="stat-value" id="resolved-txs">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Resolution Rate</span>
+                            <span class="stat-value" id="resolution-rate">0%</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Avg Confidence</span>
+                            <span class="stat-value" id="avg-confidence">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Tab Content -->
+        <div id="history-tab" class="tab-content">
+            <div class="tab-header">
+                <h2>Transaction History</h2>
+                <p class="tab-description">All processed transactions with multi-dimensional filters</p>
+            </div>
+
+            <!-- Filters -->
+            <div class="history-filters">
+                <div class="filter-group">
+                    <label>Budget Category</label>
+                    <select id="filter-budget" onchange="filterHistory()">
+                        <option value="">All Categories</option>
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Tax Category</label>
+                    <select id="filter-tax" onchange="filterHistory()">
+                        <option value="">All Tax Types</option>
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Payment Method</label>
+                    <select id="filter-payment" onchange="filterHistory()">
+                        <option value="">All Methods</option>
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Search</label>
+                    <input type="text" id="search-merchant" placeholder="Search merchant..." oninput="filterHistory()">
+                </div>
+                <button class="btn-clear-filters" onclick="clearHistoryFilters()">Clear Filters</button>
+            </div>
+
+            <!-- Transaction Table -->
+            <div class="history-table-container">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Merchant</th>
+                            <th>Bank</th>
+                            <th>Account</th>
+                            <th>Category</th>
+                            <th>Amount</th>
+                            <th>Type</th>
+                            <th>Payment</th>
+                            <th>Confidence</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-tbody">
+                        <!-- Populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="history-pagination">
+                <button onclick="previousPage()" id="btn-prev">← Previous</button>
+                <span id="page-info">Page 1 of 1</span>
+                <button onclick="nextPage()" id="btn-next">Next →</button>
+            </div>
+        </div>
+
+        <!-- Pipeline Results Table -->
+        <div id="pipeline-results-section" class="merchants-section" style="display: none; margin-bottom: 20px;">
+            <div class="card-header">
+                <div class="card-title">
+                    Pipeline Results
+                    <span class="badge" id="pipeline-results-count">0</span>
+                </div>
+            </div>
+            <div class="merchants-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>PDF Source</th>
+                            <th>Date</th>
+                            <th>Merchant</th>
+                            <th>Amount</th>
+                            <th>Type</th>
+                            <th>Stage 1</th>
+                            <th>Stage 2</th>
+                            <th>Stage 3</th>
+                            <th>Stage 4</th>
+                            <th>Confidence</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pipeline-results-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- All Merchants Table -->
+        <div class="merchants-section">
+            <div class="card-header">
+                <div class="card-title">
+                    Registered Merchants
+                    <span class="badge" id="merchants-count">0</span>
+                </div>
+            </div>
+            <div class="merchants-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Canonical Name</th>
+                            <th>Category</th>
+                            <th>Entity Type</th>
+                            <th>Variations</th>
+                        </tr>
+                    </thead>
+                    <tbody id="merchants-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let pendingMerchants = [];
+        let allMerchants = [];
+        let allCategories = []; // NEW: Store categories from API
+        let selectedPending = null;
+        let currentOption = 'new';
+
+        // FASE 1: Transaction Type Badge Rendering
+        function renderTypeBadge(type) {
+            const typeConfig = {
+                // Stage 1 format (uppercase with underscores)
+                'GASTO': { label: 'Expense', color: 'badge-red' },
+                'INGRESO': { label: 'Income', color: 'badge-green' },
+                'PAGO_TARJETA': { label: 'CC Payment', color: 'badge-blue' },
+                'TRASPASO': { label: 'Transfer', color: 'badge-orange' },
+                'RETIRO': { label: 'Withdrawal', color: 'badge-purple' },
+                'DEPOSITO': { label: 'Deposit', color: 'badge-green' },
+                'COMISION': { label: 'Fee', color: 'badge-gray' },
+                'INTERES': { label: 'Interest', color: 'badge-yellow' },
+                'AJUSTE': { label: 'Adjustment', color: 'badge-gray' },
+                'DESCONOCIDO': { label: 'Unknown', color: 'badge-unknown' },
+
+                // Backend format (lowercase with hyphens)
+                'spei-transfer-in': { label: 'Transfer In', color: 'badge-green' },
+                'card-purchase': { label: 'Card Purchase', color: 'badge-red' },
+                'domiciliacion': { label: 'Auto Payment', color: 'badge-blue' },
+                'bank-fee': { label: 'Bank Fee', color: 'badge-gray' },
+                'reversal': { label: 'Reversal', color: 'badge-yellow' },
+                'spei-transfer-out': { label: 'Transfer Out', color: 'badge-orange' },
+                'cash-withdrawal': { label: 'ATM', color: 'badge-purple' }
+            };
+
+            const config = typeConfig[type] || typeConfig['DESCONOCIDO'];
+            return `<span class="type-badge ${config.color}">${config.label}</span>`;
+        }
+
+        // Upload handling
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragging');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragging');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragging');
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].type === 'application/pdf') {
+                handleFileUpload(files[0]);
+            }
+        });
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file && file.type === 'application/pdf') {
+                handleFileUpload(file);
+            }
+        }
+
+        async function handleFileUpload(file) {
+            const formData = new FormData();
+            formData.append('pdf', file);
+
+            const statusDiv = document.getElementById('processingStatus');
+            const messageDiv = document.getElementById('processingMessage');
+
+            statusDiv.classList.add('active');
+            messageDiv.textContent = 'Uploading ' + file.name + '...';
+
+            try {
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    const currentPdfCount = result['pipeline-results'].stats.total;
+                    const totalCount = result['all-transactions'].length;
+                    const pendingCount = result['pipeline-results'].stats['pending-classification'];
+
+                    messageDiv.textContent = 'Success! Extracted ' + currentPdfCount + ' transactions from this PDF. ' +
+                                           'Total accumulated: ' + totalCount + ' transactions. ' +
+                                           pendingCount + ' need classification.';
+
+                    // Render pipeline results table with ALL transactions (cumulative)
+                    renderPipelineResults(result['all-transactions'], result['history-stats']);
+
+                    // Reload data after successful upload
+                    setTimeout(async () => {
+                        await loadAllData();
+                        statusDiv.classList.remove('active');
+                        fileInput.value = '';
+                    }, 2000);
+                } else {
+                    throw new Error(result.error || 'Upload failed');
+                }
+            } catch (error) {
+                messageDiv.textContent = 'Error: ' + error.message;
+                setTimeout(() => {
+                    statusDiv.classList.remove('active');
+                    fileInput.value = '';
+                }, 3000);
+            }
+        }
+
+        function renderPipelineResults(transactions) {
+            const section = document.getElementById('pipeline-results-section');
+            const tbody = document.getElementById('pipeline-results-tbody');
+            const countBadge = document.getElementById('pipeline-results-count');
+
+            // Show the section
+            section.style.display = 'block';
+            countBadge.textContent = transactions.length;
+
+            // Clear previous results
+            tbody.innerHTML = '';
+
+            // Render each transaction
+            transactions.forEach(tx => {
+                const row = document.createElement('tr');
+
+                // PDF Source
+                const pdfSourceCell = document.createElement('td');
+                pdfSourceCell.textContent = tx['pdf-source'] || 'N/A';
+                pdfSourceCell.style.fontSize = '0.85em';
+                pdfSourceCell.style.color = '#6c757d';
+                row.appendChild(pdfSourceCell);
+
+                // Date
+                const dateCell = document.createElement('td');
+                dateCell.textContent = tx.date || 'N/A';
+                row.appendChild(dateCell);
+
+                // Merchant (clean or extracted)
+                const merchantCell = document.createElement('td');
+                merchantCell.textContent = tx['clean-merchant'] || tx['beneficiary-name'] || 'N/A';
+                row.appendChild(merchantCell);
+
+                // Amount
+                const amountCell = document.createElement('td');
+                const amount = tx.amount || 0;
+                amountCell.textContent = '$' + amount.toFixed(2);
+                amountCell.style.textAlign = 'right';
+                row.appendChild(amountCell);
+
+                // Transaction Type (Stage 1)
+                const typeCell = document.createElement('td');
+                const txType = tx['transaction-type'] || 'N/A';
+                typeCell.textContent = txType;
+                typeCell.style.fontSize = '0.85em';
+                row.appendChild(typeCell);
+
+                // Stage 1: Type Detection
+                const stage1Cell = document.createElement('td');
+                stage1Cell.innerHTML = '<span style="color: #28a745; font-size: 0.85em;">✓ ' + (txType !== 'N/A' ? txType : 'detected') + '</span>';
+                row.appendChild(stage1Cell);
+
+                // Stage 2: Counterparty Detection
+                const stage2Cell = document.createElement('td');
+                const hasCounterparty = tx['counterparty-info'] && tx['counterparty-info']['detected?'];
+                const rfc = hasCounterparty ? tx['counterparty-info'].rfc : null;
+                if (hasCounterparty && rfc) {
+                    stage2Cell.innerHTML = '<span style="color: #28a745; font-size: 0.85em;">✓ RFC: ' + rfc + '</span>';
+                } else {
+                    stage2Cell.innerHTML = '<span style="color: #6c757d; font-size: 0.85em;">- N/A</span>';
+                }
+                row.appendChild(stage2Cell);
+
+                // Stage 3: NER Extraction
+                const stage3Cell = document.createElement('td');
+                const cleanMerchant = tx['clean-merchant'];
+                if (cleanMerchant && cleanMerchant !== 'N/A') {
+                    stage3Cell.innerHTML = '<span style="color: #28a745; font-size: 0.85em;">✓ ' + cleanMerchant + '</span>';
+                } else {
+                    stage3Cell.innerHTML = '<span style="color: #ffc107; font-size: 0.85em;">⚠ Not extracted</span>';
+                }
+                row.appendChild(stage3Cell);
+
+                // Stage 4: Entity Resolution
+                const stage4Cell = document.createElement('td');
+                const entityResolved = tx['entity-resolved?'];
+                const entityId = tx['entity-id'];
+                if (entityResolved && entityId) {
+                    stage4Cell.innerHTML = '<span style="color: #28a745; font-size: 0.85em;">✓ ' + entityId + '</span>';
+                } else if (tx['needs-manual-classification']) {
+                    stage4Cell.innerHTML = '<span style="color: #ffc107; font-size: 0.85em;">⚠ Pending</span>';
+                } else {
+                    stage4Cell.innerHTML = '<span style="color: #6c757d; font-size: 0.85em;">- No match</span>';
+                }
+                row.appendChild(stage4Cell);
+
+                // Confidence Score
+                const confidenceCell = document.createElement('td');
+                const confidence = tx.confidence || 0;
+                const confidencePercent = Math.round(confidence * 100);
+                let confidenceColor = '#dc3545'; // red
+                if (confidencePercent >= 90) confidenceColor = '#28a745'; // green
+                else if (confidencePercent >= 70) confidenceColor = '#ffc107'; // yellow
+                confidenceCell.innerHTML = '<span style="color: ' + confidenceColor + '; font-weight: bold;">' + confidencePercent + '%</span>';
+                confidenceCell.style.textAlign = 'center';
+                row.appendChild(confidenceCell);
+
+                // Status
+                const statusCell = document.createElement('td');
+                if (entityResolved) {
+                    statusCell.innerHTML = '<span class="status-badge status-resolved">Resolved</span>';
+                } else if (tx['needs-manual-classification']) {
+                    statusCell.innerHTML = '<span class="status-badge status-pending">Pending</span>';
+                } else {
+                    statusCell.innerHTML = '<span class="status-badge status-unprocessed">Unprocessed</span>';
+                }
+                row.appendChild(statusCell);
+
+                tbody.appendChild(row);
+            });
+        }
+
+        // Data loading
+        window.addEventListener('DOMContentLoaded', () => {
+            loadAllData();
+        });
+
+        async function loadAllData() {
+            await Promise.all([
+                loadPendingMerchants(),
+                loadAllMerchants(),
+                loadCategories(), // NEW: Load categories
+                loadStats()
+            ]);
+        }
+
+        async function loadPendingMerchants() {
+            try {
+                const response = await fetch('/api/merchants/pending');
+                const data = await response.json();
+                pendingMerchants = data.pending || [];
+                renderPendingList();
+            } catch (error) {
+                console.error('Error loading pending:', error);
+            }
+        }
+
+        let merchantsLoaded = false;
+        let merchantsLoadError = false;
+
+        async function loadAllMerchants() {
+            console.log('📥 Loading merchants...');
+            merchantsLoaded = false;
+            merchantsLoadError = false;
+
+            try {
+                const response = await fetch('/api/registry/merchants');
+                const data = await response.json();
+                allMerchants = data.merchants || [];
+                merchantsLoaded = true;
+
+                console.log('✅ Merchants loaded successfully');
+                console.log(`   Total merchants: ${allMerchants.length}`);
+                console.log(`   Sample merchant IDs:`, allMerchants.slice(0, 3).map(m => m['merchant-id']));
+
+                renderMerchantsTable();
+            } catch (error) {
+                console.error('❌ Error loading merchants:', error);
+                merchantsLoaded = false;
+                merchantsLoadError = true;
+                allMerchants = [];
+            }
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/registry/stats');
+                const data = await response.json();
+                const stats = data.stats;
+                document.getElementById('stat-total').textContent = stats['total-merchants'] || 0;
+                document.getElementById('stat-variations').textContent = stats['total-variations'] || 0;
+                document.getElementById('stat-pending').textContent = stats['pending-classifications'] || 0;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        async function loadCategories() {
+            try {
+                const response = await fetch('/api/categories');
+                const result = await response.json();
+
+                if (result.success) {
+                    allCategories = result.categories;
+                    console.log('✅ Loaded', allCategories.length, 'categories');
+                } else {
+                    console.error('❌ Failed to load categories:', result.error);
+                    allCategories = [];
+                }
+            } catch (error) {
+                console.error('❌ Error loading categories:', error);
+                allCategories = [];
+            }
+        }
+
+        function renderPendingList() {
+            const container = document.getElementById('pending-list');
+            const deleteAllBtn = document.getElementById('delete-all-btn');
+            document.getElementById('pending-count').textContent = pendingMerchants.length;
+
+            // Show/hide delete all button based on pending count
+            if (pendingMerchants.length > 0) {
+                deleteAllBtn.style.display = 'block';
+            } else {
+                deleteAllBtn.style.display = 'none';
+            }
+
+            if (pendingMerchants.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">&#10003;</div><div>All merchants classified</div></div>';
+                return;
+            }
+
+            container.innerHTML = pendingMerchants.map((merchant, idx) => `
+                <div class="pending-item ${selectedPending === merchant ? 'selected' : ''}">
+                    <div class="pending-item-content" onclick="selectPending(${idx})">
+                        <div class="pending-merchant-text">${merchant['merchant-text']}</div>
+                        <div class="pending-details">
+                            <span class="pending-detail-item">${renderTypeBadge(merchant['transaction-type'] || 'DESCONOCIDO')}</span>
+                            <span class="pending-detail-item">${merchant['full-context']?.amount ? '$' + merchant['full-context'].amount.toFixed(2) : 'N/A'}</span>
+                            <span class="pending-detail-item">${merchant['full-context']?.date || 'N/A'}</span>
+                        </div>
+                    </div>
+                    <button class="delete-button" onclick="event.stopPropagation(); deletePending('${merchant['merchant-text']}')">Delete</button>
+                </div>
+            `).join('');
+        }
+
+        function selectPending(idx) {
+            selectedPending = pendingMerchants[idx];
+            currentOption = 'new';
+            renderPendingList();
+            renderDetailSection();
+        }
+
+        async function deletePending(merchantText) {
+            if (!confirm(`Delete "${merchantText}" from pending reviews?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/merchants/pending', {
+                    method: 'DELETE',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({'merchant-text': merchantText})
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Remove from local array
+                    pendingMerchants = pendingMerchants.filter(m => m['merchant-text'] !== merchantText);
+
+                    // Clear selection if deleted item was selected
+                    if (selectedPending && selectedPending['merchant-text'] === merchantText) {
+                        selectedPending = null;
+                    }
+
+                    // Refresh UI
+                    renderPendingList();
+                    renderDetailSection();
+                    loadStats();
+
+                    console.log('✓ Deleted:', merchantText);
+                } else {
+                    alert('Error deleting: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error deleting pending merchant:', error);
+                alert('Error deleting merchant');
+            }
+        }
+
+        async function deleteAllPending() {
+            if (pendingMerchants.length === 0) {
+                return;
+            }
+
+            const count = pendingMerchants.length;
+            if (!confirm(`Delete ALL ${count} pending merchants? This cannot be undone.`)) {
+                return;
+            }
+
+            const deleteAllBtn = document.getElementById('delete-all-btn');
+            deleteAllBtn.disabled = true;
+            deleteAllBtn.textContent = 'Deleting...';
+
+            let deleted = 0;
+            let errors = 0;
+
+            // Delete all merchants one by one
+            for (const merchant of [...pendingMerchants]) {
+                try {
+                    const response = await fetch('/api/merchants/pending', {
+                        method: 'DELETE',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({'merchant-text': merchant['merchant-text']})
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        deleted++;
+                        console.log(`✓ Deleted ${deleted}/${count}:`, merchant['merchant-text']);
+                    } else {
+                        errors++;
+                        console.error(`✗ Error deleting:`, merchant['merchant-text'], data.error);
+                    }
+                } catch (error) {
+                    errors++;
+                    console.error(`✗ Error deleting:`, merchant['merchant-text'], error);
+                }
+            }
+
+            // Clear local state
+            pendingMerchants = [];
+            selectedPending = null;
+
+            // Refresh UI
+            renderPendingList();
+            renderDetailSection();
+            loadStats();
+
+            // Re-enable button
+            deleteAllBtn.disabled = false;
+            deleteAllBtn.textContent = 'Delete All';
+
+            // Show result
+            if (errors === 0) {
+                alert(`Successfully deleted all ${deleted} pending merchants!`);
+            } else {
+                alert(`Deleted ${deleted} merchants with ${errors} errors. Check console for details.`);
+            }
+        }
+
+        function renderDetailSection() {
+            const container = document.getElementById('detail-section');
+
+            if (!selectedPending) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">&#8592;</div><div>Select a pending merchant to classify</div></div>';
+                return;
+            }
+
+            const ctx = selectedPending['full-context'] || {};
+
+            // Extract entity information from transaction
+            const merchantEntity = selectedPending['resolved-merchant'] || {};
+            const bankEntity = selectedPending['bank-entity'] || {};
+            const accountEntity = selectedPending['account-entity'] || {};
+            const categoryEntity = selectedPending['category-entity'] || {};
+
+            container.innerHTML = `
+                <!-- Entity Resolution Section (NEW) -->
+                <div style="background: linear-gradient(135deg, #e3f2fd 0%, #f0f7ff 100%); border-left: 4px solid #2196f3; padding: 20px; margin-bottom: 25px; border-radius: 6px;">
+                    <div style="font-weight: 600; color: #1976d2; margin-bottom: 15px; font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px;">
+                        🔗 Entity Resolution (4 Dimensions)
+                    </div>
+                    <div style="display: grid; grid-template-columns: 140px 1fr; gap: 12px; font-size: 14px;">
+                        <!-- Merchant Entity -->
+                        <span style="font-weight: 600; color: #666;">🏪 Merchant:</span>
+                        <span style="color: #333;">
+                            ${merchantEntity['canonical-name'] ?
+                                `<strong>${merchantEntity['canonical-name']}</strong>
+                                 <span class="status-badge status-resolved" style="margin-left: 8px;">✓ Resolved</span>
+                                 <span style="color: #666; font-size: 0.9em;"> (${merchantEntity['entity-type'] || 'N/A'})</span>`
+                                :
+                                `<span style="color: #856404;">Not Resolved</span>
+                                 <span class="status-badge status-pending" style="margin-left: 8px;">⏳ Pending</span>`}
+                        </span>
+
+                        <!-- Bank Entity -->
+                        <span style="font-weight: 600; color: #666;">🏦 Bank:</span>
+                        <span style="color: #333;">
+                            ${selectedPending['bank-resolved?'] ?
+                                `<strong>${selectedPending['bank-canonical'] || 'N/A'}</strong>
+                                 <span class="status-badge status-resolved" style="margin-left: 8px;">✓ Resolved</span>
+                                 <span style="color: #666; font-size: 0.9em;"> (${selectedPending['bank-type'] || 'N/A'}, ${selectedPending['bank-country'] || 'N/A'})</span>`
+                                :
+                                `<span style="color: #856404;">${selectedPending['bank-text'] || 'Not Detected'}</span>
+                                 <span class="status-badge status-pending" style="margin-left: 8px;">⏳ Pending</span>`}
+                        </span>
+
+                        <!-- Account Entity -->
+                        <span style="font-weight: 600; color: #666;">💳 Account:</span>
+                        <span style="color: #333;">
+                            ${selectedPending['account-resolved?'] ?
+                                `<strong>${selectedPending['account-canonical'] || 'N/A'}</strong>
+                                 <span class="status-badge status-resolved" style="margin-left: 8px;">✓ Resolved</span>
+                                 <span style="color: #666; font-size: 0.9em;"> (${selectedPending['account-type'] || 'N/A'})</span>`
+                                :
+                                `<span style="color: #856404;">${selectedPending['account-text'] || 'Not Detected'}</span>
+                                 <span class="status-badge status-pending" style="margin-left: 8px;">⏳ Pending</span>`}
+                        </span>
+
+                        <!-- Category Entity -->
+                        <span style="font-weight: 600; color: #666;">📁 Category:</span>
+                        <span style="color: #333;">
+                            ${selectedPending['category-resolved?'] ?
+                                `${categoryEntity.icon || '📂'} <strong>${selectedPending['category-canonical'] || 'N/A'}</strong>
+                                 <span class="status-badge status-resolved" style="margin-left: 8px;">✓ Resolved</span>
+                                 <span style="color: #666; font-size: 0.9em;"> → ${selectedPending['budget-category'] || 'N/A'}</span>`
+                                :
+                                `<span style="color: #856404;">${selectedPending['category-text'] || 'Not Detected'}</span>
+                                 <span class="status-badge status-pending" style="margin-left: 8px;">⏳ Pending</span>`}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Transaction Context Section -->
+                <div class="provenance-section">
+                    <div class="provenance-title">Transaction Context</div>
+                    <div class="provenance-grid">
+                        <span class="provenance-label">Merchant:</span>
+                        <span class="provenance-value"><strong>${selectedPending['merchant-text']}</strong></span>
+
+                        <span class="provenance-label">Amount:</span>
+                        <span class="provenance-value amount-highlight">$${(ctx.amount || 0).toFixed(2)} ${ctx.currency || 'MXN'}</span>
+
+                        <span class="provenance-label">Date:</span>
+                        <span class="provenance-value">${ctx.date || 'N/A'}</span>
+
+                        <span class="provenance-label">Type:</span>
+                        <span class="provenance-value">${selectedPending['transaction-type']}</span>
+
+                        <span class="provenance-label">Description:</span>
+                        <span class="provenance-value">
+                            <div class="description-box">${ctx['context-lines'] ? ctx['context-lines'].join('\n') : (ctx.description || 'No description available')}</div>
+                        </span>
+
+                        ${ctx['beneficiary-name'] ? `
+                            <span class="provenance-label">Beneficiary:</span>
+                            <span class="provenance-value">${ctx['beneficiary-name']}</span>
+                        ` : ''}
+
+                        ${ctx.confidence ? `
+                            <span class="provenance-label">Confidence:</span>
+                            <span class="provenance-value">${(ctx.confidence * 100).toFixed(1)}%</span>
+                        ` : ''}
+                    </div>
+                </div>
+
+                <div class="options-section">
+                    <div class="option-tabs">
+                        <div class="option-tab ${currentOption === 'new' ? 'active' : ''}" onclick="switchOption('new')">
+                            <div class="option-tab-title">Create New Merchant</div>
+                            <div class="option-tab-desc">Register as new entity</div>
+                        </div>
+                        <div class="option-tab ${currentOption === 'existing' ? 'active' : ''}" onclick="switchOption('existing')">
+                            <div class="option-tab-title">Add to Existing</div>
+                            <div class="option-tab-desc">Link as variation</div>
+                        </div>
+                    </div>
+
+                    <div id="option-new" class="option-content ${currentOption === 'new' ? 'active' : ''}">
+                        ${renderNewMerchantForm()}
+                    </div>
+
+                    <div id="option-existing" class="option-content ${currentOption === 'existing' ? 'active' : ''}">
+                        ${renderConnectForm()}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderNewMerchantForm() {
+            // Group categories by type
+            const categoryGroups = {
+                'expense': [],
+                'income': [],
+                'transfer': [],
+                'other': []
+            };
+
+            allCategories.forEach(cat => {
+                const type = cat.type || 'other';
+                if (!categoryGroups[type]) {
+                    categoryGroups[type] = [];
+                }
+                categoryGroups[type].push(cat);
+            });
+
+            // Generate category options grouped by type
+            let categoryOptions = '';
+
+            if (categoryGroups['expense'].length > 0) {
+                categoryOptions += '<optgroup label="💸 Expenses">';
+                categoryGroups['expense'].forEach(cat => {
+                    categoryOptions += `<option value="${cat['category-id']}">${cat.icon || ''} ${cat.name}</option>`;
+                });
+                categoryOptions += '</optgroup>';
+            }
+
+            if (categoryGroups['income'].length > 0) {
+                categoryOptions += '<optgroup label="💰 Income">';
+                categoryGroups['income'].forEach(cat => {
+                    categoryOptions += `<option value="${cat['category-id']}">${cat.icon || ''} ${cat.name}</option>`;
+                });
+                categoryOptions += '</optgroup>';
+            }
+
+            if (categoryGroups['transfer'].length > 0) {
+                categoryOptions += '<optgroup label="🔄 Transfers">';
+                categoryGroups['transfer'].forEach(cat => {
+                    categoryOptions += `<option value="${cat['category-id']}">${cat.icon || ''} ${cat.name}</option>`;
+                });
+                categoryOptions += '</optgroup>';
+            }
+
+            if (categoryGroups['other'].length > 0) {
+                categoryOptions += '<optgroup label="📦 Other">';
+                categoryGroups['other'].forEach(cat => {
+                    categoryOptions += `<option value="${cat['category-id']}">${cat.icon || ''} ${cat.name}</option>`;
+                });
+                categoryOptions += '</optgroup>';
+            }
+
+            return `
+                <form id="form-new" onsubmit="handleCreateNew(event)">
+                    <div class="form-group">
+                        <label class="form-label">Canonical Name</label>
+                        <input type="text" id="new-canonical-name" class="form-input"
+                               value="${selectedPending['merchant-text']}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Category</label>
+                        <select id="new-category" class="form-select">
+                            ${categoryOptions}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Entity Type</label>
+                        <select id="new-entity-type" class="form-select">
+                            <option value="business">Business</option>
+                            <option value="person">Person</option>
+                            <option value="government">Government</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-full">Create Merchant</button>
+                </form>
+            `;
+        }
+
+        function renderConnectForm() {
+            // Show loading state if merchants are still loading
+            if (!merchantsLoaded && !merchantsLoadError) {
+                console.log('⏳ Rendering loading state (merchants still loading)');
+                return `
+                    <div class="alert alert-info">
+                        <div style="text-align: center; padding: 20px;">
+                            <div>⏳ Loading merchants...</div>
+                            <div style="margin-top: 10px; font-size: 12px; opacity: 0.7;">Please wait</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Show error state if loading failed
+            if (merchantsLoadError) {
+                console.error('❌ Rendering error state (merchants failed to load)');
+                return `
+                    <div class="alert alert-warning">
+                        <div>❌ Failed to load merchants</div>
+                        <div style="margin-top: 10px;">
+                            <button onclick="loadAllMerchants(); renderDetailSection();" class="btn btn-primary">
+                                Retry
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Show empty state if no merchants available
+            if (allMerchants.length === 0) {
+                console.warn('⚠️  Rendering empty state (0 merchants loaded)');
+                return `
+                    <div class="alert alert-warning">
+                        <div>No merchants found in registry</div>
+                        <div style="margin-top: 10px; font-size: 12px;">
+                            Please create the first merchant using "Create New" option
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Merchants loaded successfully - render form
+            console.log(`✅ Rendering form with ${allMerchants.length} merchants`);
+
+            const merchantOptions = allMerchants.map(m => {
+                console.log(`   - Option: ${m['merchant-id']} = ${m['canonical-name']}`);
+                return `<option value="${m['merchant-id']}">${m['canonical-name']} (${m.category})</option>`;
+            }).join('');
+
+            return `
+                <form id="form-existing" onsubmit="handleConnectExisting(event)">
+                    <div class="alert alert-info">
+                        "${selectedPending['merchant-text']}" will be added as a variation to the selected merchant
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Select Existing Merchant</label>
+                        <select id="existing-merchant-id" class="form-select" required>
+                            <option value="" disabled selected>-- Select a merchant --</option>
+                            ${merchantOptions}
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-success btn-full">Add as Variation</button>
+                </form>
+            `;
+        }
+
+        function switchOption(option) {
+            currentOption = option;
+            renderDetailSection();
+        }
+
+        async function handleCreateNew(e) {
+            e.preventDefault();
+
+            const canonicalName = document.getElementById('new-canonical-name').value.trim();
+            const category = document.getElementById('new-category').value;
+            const entityType = document.getElementById('new-entity-type').value;
+
+            try {
+                const response = await fetch('/api/merchants/classify', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        'merchant-text': selectedPending['merchant-text'],
+                        'canonical-name': canonicalName,
+                        'category': category,
+                        'entity-type': entityType,
+                        'variations': [selectedPending['merchant-text']]
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('Merchant created successfully', 'success');
+                    selectedPending = null;
+                    await loadAllData();
+                    renderDetailSection();
+                } else {
+                    throw new Error(result.error || 'Failed');
+                }
+            } catch (error) {
+                showAlert('Error: ' + error.message, 'warning');
+            }
+        }
+
+        async function handleConnectExisting(e) {
+            e.preventDefault();
+
+            console.log('🔍 ======== HANDLE CONNECT EXISTING STARTED ========');
+
+            // Check if merchants are loaded
+            if (!merchantsLoaded) {
+                console.error('❌ ERROR: Merchants not loaded yet!');
+                showAlert('Please wait for merchants to load', 'warning');
+                return;
+            }
+
+            const selectElement = document.getElementById('existing-merchant-id');
+            if (!selectElement) {
+                console.error('❌ ERROR: Select element not found!');
+                showAlert('Form error - please refresh page', 'warning');
+                return;
+            }
+
+            const merchantId = selectElement.value;
+
+            // Comprehensive logging
+            console.log('📊 Form state:');
+            console.log(`  merchantsLoaded: ${merchantsLoaded}`);
+            console.log(`  allMerchants.length: ${allMerchants.length}`);
+            console.log(`  selectElement exists: ${!!selectElement}`);
+            console.log(`  merchantId value: "${merchantId}"`);
+            console.log(`  merchantId length: ${merchantId.length}`);
+            console.log(`  merchantId type: ${typeof merchantId}`);
+            console.log(`  merchantId isEmpty: ${merchantId === ''}`);
+            console.log(`  selectedPending:`, selectedPending);
+
+            // Validation 1: Empty merchant ID
+            if (!merchantId || merchantId === '' || merchantId.trim() === '') {
+                console.error('❌ VALIDATION FAILED: Empty merchant ID');
+                console.error('   User did not select a merchant from dropdown');
+                showAlert('⚠️ Please select a merchant from the dropdown', 'warning');
+                return;
+            }
+
+            // Validation 2: Merchant ID exists in registry
+            const merchantExists = allMerchants.some(m => m['merchant-id'] === merchantId);
+            if (!merchantExists) {
+                console.error(`❌ VALIDATION FAILED: Merchant ID "${merchantId}" not found in registry`);
+                console.error('   Available merchant IDs:', allMerchants.map(m => m['merchant-id']));
+                showAlert(`Merchant "${merchantId}" not found in registry`, 'warning');
+                return;
+            }
+
+            console.log(`✅ Validation passed - merchant "${merchantId}" exists in registry`);
+
+            // Prepare payload
+            const payload = {
+                'merchant-id': merchantId,
+                'variation': selectedPending['merchant-text'],
+                'merchant-text': selectedPending['merchant-text']
+            };
+
+            console.log('📤 Sending payload to /api/merchants/add-variation:');
+            console.log(JSON.stringify(payload, null, 2));
+
+            try {
+                const response = await fetch('/api/merchants/add-variation', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+
+                console.log(`📥 Response status: ${response.status}`);
+
+                const result = await response.json();
+
+                console.log('📥 Response body:', result);
+
+                if (result.success) {
+                    console.log('✅ SUCCESS: Variation added successfully');
+                    showAlert('✅ Variation added successfully', 'success');
+                    selectedPending = null;
+                    await loadAllData();
+                    renderDetailSection();
+                } else {
+                    throw new Error(result.error || 'Failed');
+                }
+            } catch (error) {
+                console.error('❌ ERROR during API call:', error);
+                console.error('   Error message:', error.message);
+                console.error('   Error stack:', error.stack);
+                showAlert('Error: ' + error.message, 'warning');
+            }
+
+            console.log('🔍 ======== HANDLE CONNECT EXISTING FINISHED ========');
+        }
+
+        function renderMerchantsTable() {
+            const tbody = document.getElementById('merchants-tbody');
+            document.getElementById('merchants-count').textContent = allMerchants.length;
+
+            if (allMerchants.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 40px;">No merchants registered</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = allMerchants.map(merchant => `
+                <tr>
+                    <td><strong>${merchant['canonical-name']}</strong></td>
+                    <td><span class="tag">${merchant.category}</span></td>
+                    <td><span class="tag">${merchant['entity-type']}</span></td>
+                    <td>${(merchant.variations || []).slice(0, 3).join(', ')}${merchant.variations && merchant.variations.length > 3 ? '...' : ''}</td>
+                </tr>
+            `).join('');
+        }
+
+        function showAlert(message, type = 'info') {
+            const container = document.getElementById('alert-container');
+            const className = type === 'success' ? 'alert-success' : type === 'warning' ? 'alert-warning' : 'alert-info';
+            container.innerHTML = `<div class="alert ${className}">${message}</div>`;
+
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+
+        // ============================================================================
+        // TAB SWITCHING
+        // ============================================================================
+
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+
+            // Load data if needed
+            if (tabName === 'categories' && !categoryStats) {
+                loadCategoryStats();
+            } else if (tabName === 'history' && allTransactions.length === 0) {
+                loadTransactionHistory();
+            }
+        }
+
+        // ============================================================================
+        // CATEGORIES TAB
+        // ============================================================================
+
+        let categoryStats = null;
+
+        async function loadCategoryStats() {
+            try {
+                const response = await fetch('/api/categories/stats');
+                if (!response.ok) {
+                    console.warn('Category stats endpoint not available yet');
+                    document.getElementById('categories-tab').innerHTML = `
+                        <div class="tab-header">
+                            <h2>Multi-Dimensional Category Breakdown</h2>
+                            <p class="tab-description">Category statistics will be available once transactions are processed through Stage 5</p>
+                        </div>
+                        <div style="padding: 40px; text-align: center; background: white; border-radius: 8px; margin: 20px;">
+                            <div style="font-size: 48px; margin-bottom: 20px; opacity: 0.3;">📊</div>
+                            <p style="color: #6c757d; font-size: 16px;">
+                                Category statistics will be available once transactions are processed through Stage 5.
+                            </p>
+                        </div>
+                    `;
+                    return;
+                }
+                categoryStats = await response.json();
+                renderCategoryStats();
+            } catch (error) {
+                console.error('Error loading category stats:', error);
+                document.getElementById('categories-tab').innerHTML = `
+                    <div class="tab-header">
+                        <h2>Multi-Dimensional Category Breakdown</h2>
+                        <p class="tab-description">Category statistics are not yet available</p>
+                    </div>
+                    <div style="padding: 40px; text-align: center; background: white; border-radius: 8px; margin: 20px;">
+                        <div style="font-size: 48px; margin-bottom: 20px; opacity: 0.3;">⚠️</div>
+                        <p style="color: #6c757d; font-size: 16px;">
+                            Category statistics will be available once transactions are processed through Stage 5.
+                        </p>
+                    </div>
+                `;
+            }
+        }
+
+        function renderCategoryStats() {
+            if (!categoryStats) return;
+
+            // Summary stats
+            const totalTxs = categoryStats['total-transactions'] || 0;
+            const resolvedCount = categoryStats['resolved-count'] || 0;
+            const resolutionRate = categoryStats['resolution-rate'] || 0;
+            const avgConfidence = categoryStats['avg-confidence'] || 0;
+
+            document.getElementById('total-txs').textContent = totalTxs;
+            document.getElementById('resolved-txs').textContent = resolvedCount;
+            document.getElementById('resolution-rate').textContent = (resolutionRate * 100).toFixed(1) + '%';
+            document.getElementById('avg-confidence').textContent = (avgConfidence * 100).toFixed(1) + '%';
+
+            // Budget categories
+            renderCategoryBreakdown(
+                'budget-breakdown',
+                categoryStats['by-budget-category'] || {},
+                'budget-total'
+            );
+
+            // Tax categories
+            renderCategoryBreakdown(
+                'tax-breakdown',
+                categoryStats['by-tax-category'] || {},
+                'tax-total'
+            );
+
+            // Payment methods
+            renderCategoryBreakdown(
+                'payment-breakdown',
+                categoryStats['by-payment-method'] || {},
+                'payment-total'
+            );
+
+            // Accounting categories
+            renderCategoryBreakdown(
+                'accounting-breakdown',
+                categoryStats['by-account-category'] || {},
+                'accounting-total'
+            );
+
+            // Merchant categories (if available)
+            if (categoryStats['by-merchant-category']) {
+                renderCategoryBreakdown(
+                    'merchant-cat-breakdown',
+                    categoryStats['by-merchant-category'],
+                    'merchant-cat-total'
+                );
+            }
+        }
+
+        function renderCategoryBreakdown(containerId, data, totalId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            const entries = Object.entries(data);
+            const total = entries.reduce((sum, [_, count]) => sum + count, 0);
+
+            // Update total count
+            if (totalId) {
+                document.getElementById(totalId).textContent = `${total} txs`;
+            }
+
+            if (entries.length === 0) {
+                container.innerHTML = '<p style="color: #6c757d; font-size: 14px;">No data available</p>';
+                return;
+            }
+
+            // Sort by count descending
+            entries.sort((a, b) => b[1] - a[1]);
+
+            container.innerHTML = entries.map(([name, count]) => {
+                const percentage = total > 0 ? (count / total) * 100 : 0;
+                return `
+                    <div class="category-item">
+                        <span class="category-item-name">${name}</span>
+                        <div class="category-item-count">
+                            <span class="category-item-number">${count} (${percentage.toFixed(1)}%)</span>
+                            <div class="category-item-bar">
+                                <div class="category-item-bar-fill" style="width: ${percentage}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ============================================================================
+        // HISTORY TAB
+        // ============================================================================
+
+        let allTransactions = [];
+        let filteredTransactions = [];
+        let currentPage = 1;
+        const PAGE_SIZE = 50;
+
+        async function loadTransactionHistory() {
+            try {
+                // Try to load from existing endpoint or use pending transactions
+                const response = await fetch('/api/registry/transaction-history');
+                if (response.ok) {
+                    const data = await response.json();
+                    // Extract transactions array from response
+                    allTransactions = data.transactions || data || [];
+                    console.log(`✅ Loaded ${allTransactions.length} transactions from history`);
+                } else {
+                    // Fallback: use pending transactions
+                    allTransactions = pendingMerchants.flatMap(m => m.transactions || []);
+                    console.log(`⚠️ Using ${allTransactions.length} pending transactions as fallback`);
+                }
+
+                filteredTransactions = allTransactions;
+                updateHistoryFilters();
+                renderHistoryPage();
+
+                // Update badge
+                document.getElementById('history-count').textContent = allTransactions.length;
+            } catch (error) {
+                console.error('Error loading transaction history:', error);
+                // Use pending merchant data as fallback
+                allTransactions = pendingMerchants.flatMap(m => {
+                    return [{
+                        date: m['full-context']?.date || 'N/A',
+                        'merchant-text': m['merchant-text'],
+                        amount: m['full-context']?.amount || 0,
+                        'transaction-type': m['transaction-type'] || 'DESCONOCIDO',
+                        'budget-category': 'N/A',
+                        'tax-category': 'N/A',
+                        'payment-method': 'N/A',
+                        'category-resolution-confidence': 0
+                    }];
+                });
+                filteredTransactions = allTransactions;
+                updateHistoryFilters();
+                renderHistoryPage();
+                document.getElementById('history-count').textContent = allTransactions.length;
+            }
+        }
+
+        function updateHistoryFilters() {
+            if (!categoryStats) return;
+
+            // Budget categories
+            const budgetSelect = document.getElementById('filter-budget');
+            const budgetOptions = Object.keys(categoryStats['by-budget-category'] || {});
+            budgetSelect.innerHTML = '<option value="">All Categories</option>' +
+                budgetOptions.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+
+            // Tax categories
+            const taxSelect = document.getElementById('filter-tax');
+            const taxOptions = Object.keys(categoryStats['by-tax-category'] || {});
+            taxSelect.innerHTML = '<option value="">All Tax Types</option>' +
+                taxOptions.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+
+            // Payment methods
+            const paymentSelect = document.getElementById('filter-payment');
+            const paymentOptions = Object.keys(categoryStats['by-payment-method'] || {});
+            paymentSelect.innerHTML = '<option value="">All Methods</option>' +
+                paymentOptions.map(method => `<option value="${method}">${method}</option>`).join('');
+        }
+
+        function filterHistory() {
+            const budgetFilter = document.getElementById('filter-budget').value;
+            const taxFilter = document.getElementById('filter-tax').value;
+            const paymentFilter = document.getElementById('filter-payment').value;
+            const searchText = document.getElementById('search-merchant').value.toLowerCase();
+
+            filteredTransactions = allTransactions.filter(tx => {
+                if (budgetFilter && tx['budget-category'] !== budgetFilter) return false;
+                if (taxFilter && tx['tax-category'] !== taxFilter) return false;
+                if (paymentFilter && tx['payment-method'] !== paymentFilter) return false;
+                if (searchText && !tx['merchant-text']?.toLowerCase().includes(searchText)) return false;
+                return true;
+            });
+
+            currentPage = 1;
+            renderHistoryPage();
+        }
+
+        function clearHistoryFilters() {
+            document.getElementById('filter-budget').value = '';
+            document.getElementById('filter-tax').value = '';
+            document.getElementById('filter-payment').value = '';
+            document.getElementById('search-merchant').value = '';
+            filterHistory();
+        }
+
+        function renderHistoryPage() {
+            const start = (currentPage - 1) * PAGE_SIZE;
+            const end = start + PAGE_SIZE;
+            const pageTransactions = filteredTransactions.slice(start, end);
+
+            const tbody = document.getElementById('history-tbody');
+            if (pageTransactions.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: #6c757d;">No transactions found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = pageTransactions.map(tx => {
+                // Extract merchant name (multiple possible fields)
+                const merchant = tx['merchant-text'] || tx['canonical-merchant'] || tx['clean-merchant'] || 'Unknown';
+
+                // Extract transaction type (multiple possible fields)
+                const txType = tx['transaction-type'] || tx['type'] || 'DESCONOCIDO';
+
+                // Entity Resolution fields (from Stage 4)
+                const bankName = tx['bank-canonical'] || tx['bank-text'] || '-';
+                const bankResolved = tx['bank-resolved?'];
+                const accountName = tx['account-canonical'] || tx['account-text'] || '-';
+                const accountResolved = tx['account-resolved?'];
+                const categoryName = tx['category-canonical'] || tx['category-text'] || '-';
+                const categoryResolved = tx['category-resolved?'];
+
+                // Stage 5 fields (may not exist yet)
+                const payment = tx['payment-method'] || '-';
+                const confidence = tx['category-resolution-confidence'] || tx['stage-4']?.confidence || 0;
+
+                return `
+                <tr>
+                    <td>${tx.date || 'N/A'}</td>
+                    <td>${merchant}</td>
+                    <td>
+                        ${bankName}
+                        ${bankResolved ? '<span style="color: #28a745; font-size: 0.9em;">✓</span>' : '<span style="color: #ffc107; font-size: 0.9em;">⏳</span>'}
+                    </td>
+                    <td>
+                        ${accountName}
+                        ${accountResolved ? '<span style="color: #28a745; font-size: 0.9em;">✓</span>' : '<span style="color: #ffc107; font-size: 0.9em;">⏳</span>'}
+                    </td>
+                    <td>
+                        ${categoryName}
+                        ${categoryResolved ? '<span style="color: #28a745; font-size: 0.9em;">✓</span>' : '<span style="color: #ffc107; font-size: 0.9em;">⏳</span>'}
+                    </td>
+                    <td style="text-align: right;">${formatAmount(tx.amount)}</td>
+                    <td>${renderTypeBadge(txType)}</td>
+                    <td>${payment}</td>
+                    <td>${renderConfidenceBadge(confidence)}</td>
+                </tr>
+                `;
+            }).join('');
+
+            // Update pagination
+            const totalPages = Math.ceil(filteredTransactions.length / PAGE_SIZE);
+            document.getElementById('page-info').textContent = `Page ${currentPage} of ${totalPages || 1}`;
+            document.getElementById('btn-prev').disabled = currentPage === 1;
+            document.getElementById('btn-next').disabled = currentPage === totalPages || totalPages === 0;
+        }
+
+        function previousPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                renderHistoryPage();
+            }
+        }
+
+        function nextPage() {
+            const totalPages = Math.ceil(filteredTransactions.length / PAGE_SIZE);
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderHistoryPage();
+            }
+        }
+
+        function formatAmount(amount) {
+            if (amount === undefined || amount === null) return 'N/A';
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD'
+            }).format(amount);
+        }
+
+        function renderConfidenceBadge(confidence) {
+            const percent = Math.round(confidence * 100);
+            let className = 'confidence-very-low';
+            if (percent >= 90) className = 'confidence-high';
+            else if (percent >= 70) className = 'confidence-medium';
+            else if (percent >= 60) className = 'confidence-low';
+
+            return `<span class="confidence-badge ${className}">${percent}%</span>`;
+        }
+
+        // ============================================================================
+        // INITIALIZATION
+        // ============================================================================
+
+        // Update initialization to set badge counts
+        const originalLoadAllData = loadAllData;
+        loadAllData = async function() {
+            await originalLoadAllData();
+
+            // Update merchants count badge
+            document.getElementById('merchants-count').textContent = pendingMerchants.length;
+
+            // Preload category stats (will show placeholder if not available)
+            await loadCategoryStats();
+
+            console.log('✅ 3-tab system initialized');
+        };
+
+        // ============================================================================
+        // FASE 5 SELF-AUDIT
+        // ============================================================================
+
+        function runFase5SelfAudit() {
+            console.log('🔍 FASE 5 Self-Audit: UI Tabs System');
+            console.log('=========================================\n');
+
+            // Test 1: Tab navigation exists
+            const tabButtons = document.querySelectorAll('.tab-button');
+            console.log(`1. Tab buttons: ${tabButtons.length === 3 ? '✅' : '❌'} (${tabButtons.length}/3)`);
+
+            // Test 2: Tab contents exist
+            const tabContents = document.querySelectorAll('.tab-content');
+            console.log(`2. Tab contents: ${tabContents.length === 3 ? '✅' : '❌'} (${tabContents.length}/3)`);
+
+            // Test 3: Categories tab structure
+            const categoryCards = document.querySelectorAll('.category-card');
+            console.log(`3. Category cards: ${categoryCards.length >= 5 ? '✅' : '❌'} (${categoryCards.length}/6)`);
+
+            // Test 4: History tab structure
+            const historyTable = document.querySelector('.history-table');
+            console.log(`4. History table: ${historyTable ? '✅' : '❌'}`);
+
+            // Test 5: Tab switching function
+            console.log(`5. Tab switching: ${typeof switchTab === 'function' ? '✅' : '❌'}`);
+
+            // Test 6: Category stats loading
+            console.log(`6. Category stats: ${categoryStats !== null ? '✅' : '⏳ Loading...'}`);
+
+            // Test 7: History data loading
+            console.log(`7. History data: ${allTransactions.length > 0 ? '✅' : '⏳ Loading...'} (${allTransactions.length} txs)`);
+
+            console.log('\n✅ FASE 5 Self-Audit Complete\n');
+        }
+
+        // Run audit after 2 seconds
+        setTimeout(runFase5SelfAudit, 2000);
+
+        // 🔍 SELF-AUDIT: Transaction Type Badges (FASE 1)
+        console.log('🔍 FASE 1 Self-Audit: Transaction Type Badges');
+
+        // Test renderTypeBadge with all 10 types
+        const testTypes = ['GASTO', 'INGRESO', 'PAGO_TARJETA', 'TRASPASO', 'RETIRO',
+                           'DEPOSITO', 'COMISION', 'INTERES', 'AJUSTE', 'DESCONOCIDO', 'INVALID'];
+
+        console.log('Testing renderTypeBadge():');
+        testTypes.forEach(type => {
+            const badge = renderTypeBadge(type);
+            const hasColor = badge.includes('badge-');
+            const hasLabel = badge.includes('<span');
+            console.log(`  ${type}: ${hasColor && hasLabel ? '✅' : '❌'} ${badge.substring(0, 50)}...`);
+        });
+
+        // Verify Type badges in rendered list
+        setTimeout(() => {
+            // Count type badges in rendered pending list
+            const typeBadges = document.querySelectorAll('.type-badge');
+            console.log(`Type badges rendered: ${typeBadges.length > 0 ? '✅' : '❌'} (${typeBadges.length} badges)`);
+
+            // Verify CSS loaded
+            const testBadge = document.querySelector('.badge-red, .badge-green, .badge-blue');
+            const hasStyles = testBadge && window.getComputedStyle(testBadge).backgroundColor !== 'rgba(0, 0, 0, 0)';
+            console.log(`CSS styles loaded: ${hasStyles ? '✅' : '❌'}`);
+
+            console.log('\n✅ FASE 1 Self-Audit Complete');
+        }, 1000);
+    </script>
+</body>
+</html>

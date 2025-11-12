@@ -1,0 +1,194 @@
+{:counterparties
+
+ ;; ============================================================================
+ ;; Payment Aggregators (Mexican market)
+ ;; ============================================================================
+
+ {:clip
+  {:description "CLIP MX - Mexican payment aggregator"
+   :type :payment-aggregator
+   :patterns ["CLIPMX" "CLIP MX"]
+   :extract-after "CLIP MX"
+   :confidence 0.95
+   :country "MX"}
+
+  :zettle
+  {:description "Zettle (Square) - Payment aggregator"
+   :type :payment-aggregator
+   :patterns ["ZETTLE"]
+   :extract-after "ZETTLE"
+   :confidence 0.95
+   :country "MX"}
+
+  :payu
+  {:description "PayU - Latin American payment gateway"
+   :type :payment-aggregator
+   :patterns ["PAYU"]
+   :extract-after "PAYU"
+   :confidence 0.90
+   :country "LATAM"}
+
+  :stripe
+  {:description "Stripe - Global payment processor"
+   :type :payment-aggregator
+   :patterns ["STRIPE" "STR AGREGADOR"]
+   :extract-after "STRIPE"
+   :confidence 0.95
+   :country "GLOBAL"}
+
+  ;; ============================================================================
+  ;; Marketplaces (different from aggregators - they ARE the merchant)
+  ;; ============================================================================
+
+  :uber
+  {:description "Uber - Ride sharing (marketplace, not aggregator)"
+   :type :marketplace
+   :patterns ["UBER \\*"]
+   :extract-after "UBER \\*"
+   :confidence 0.90
+   :country "GLOBAL"
+   :note "Uber marketplace - merchant name comes after UBER *"}
+
+  :amazon
+  {:description "Amazon - E-commerce marketplace"
+   :type :marketplace
+   :patterns ["AMAZON\\."]
+   :extract-after "AMAZON\\."
+   :confidence 0.90
+   :country "GLOBAL"}
+
+  :airbnb
+  {:description "Airbnb - Accommodation marketplace"
+   :type :marketplace
+   :patterns ["AIRBNB"]
+   :extract-after "AIRBNB"
+   :confidence 0.90
+   :country "GLOBAL"}
+
+ ;; ============================================================================
+ ;; Subscription Services (Semantic Categorization)
+ ;; ============================================================================
+
+ :google-services
+  {:description "Google Services - Subscriptions (YouTube Premium, Google One, etc.)"
+   :type :subscription-provider
+   :category :subscription
+   :patterns ["GOOGLE YOUTUBEPREMIUM" "GOOGLE ONE" "GOOGLE STORAGE" "GOOGLE"]
+   :extract-after "GOOGLE\\s+"
+   :confidence 0.95
+   :country "GLOBAL"
+   :note "Service name comes after GOOGLE"}
+
+ :netflix
+  {:description "Netflix - Video streaming subscription"
+   :type :subscription-provider
+   :category :subscription
+   :patterns ["NETFLIX"]
+   :extract-after "NETFLIX"
+   :confidence 0.95
+   :country "GLOBAL"}
+
+ :spotify
+  {:description "Spotify - Music streaming subscription"
+   :type :subscription-provider
+   :category :subscription
+   :patterns ["SPOTIFY"]
+   :extract-after "SPOTIFY"
+   :confidence 0.95
+   :country "GLOBAL"}
+
+ ;; ============================================================================
+ ;; Business Payment Providers (Semantic Categorization)
+ ;; ============================================================================
+
+ :wise-payments
+  {:description "Wise Payments Limited - International business transfers"
+   :type :business-payment-provider
+   :category :business-income
+   :patterns ["WISE PAYMENTS LIMITED" "WISE PAYMENT"]
+   :extract-after "WISE PAYMENTS? LIMITED"
+   :confidence 0.95
+   :country "GLOBAL"
+   :note "Likely business income from international clients"}
+
+ ;; ============================================================================
+ ;; Government/Tax Authorities (Semantic Categorization)
+ ;; ============================================================================
+
+ :sat-tax
+  {:description "SAT - Mexican Tax Authority (Servicio de Administración Tributaria)"
+   :type :tax-authority
+   :category :taxes
+   :patterns ["RFC/CURP: SAT" "SAT8410245V8"]
+   :extract-after nil
+   :confidence 0.98
+   :country "MX"
+   :note "Tax payments via COBRANZA DOMICILIADA - RFC: SAT8410245V8"}
+
+ ;; ============================================================================
+ ;; Insurance Providers (Semantic Categorization)
+ ;; ============================================================================
+
+ :atlas-seguros
+  {:description "ATLAS Seguros - Insurance payments via direct debit"
+   :type :insurance-provider
+   :category :insurance
+   :patterns ["RFC/CURP: CNM980114PI2"]
+   :extract-after nil
+   :confidence 0.95
+   :country "MX"
+   :note "Insurance payments via COBRANZA DOMICILIADA - RFC: CNM980114PI2"}
+
+ ;; ============================================================================
+ ;; Telecom/Utilities Providers (Semantic Categorization)
+ ;; ============================================================================
+
+ :att-mexico
+  {:description "AT&T México - Telecom/Internet via direct debit"
+   :type :telecom-provider
+   :category :utilities
+   :patterns ["RFC/CURP: ATT" "AT&T"]
+   :extract-after nil
+   :confidence 0.90
+   :country "MX"
+   :note "Telecom payments via COBRANZA DOMICILIADA - RFC TBD"}
+
+ ;; ============================================================================
+ ;; Generic COBRANZA DOMICILIADA Fallback (Low confidence)
+ ;; ============================================================================
+
+ :cobranza-generic
+  {:description "COBRANZA DOMICILIADA - Generic direct debit (unidentified RFC)"
+   :type :direct-debit
+   :category :utilities
+   :patterns ["COBRANZA DOMICILIADA"]
+   :extract-after nil
+   :confidence 0.30
+   :country "MX"
+   :note "Generic fallback for unidentified direct debits - needs manual review"}}
+
+ ;; ============================================================================
+ ;; Pattern Matching Configuration
+ ;; ============================================================================
+
+ :matching-config
+ {:case-sensitive? false
+  :whole-word? false
+  ;; Priority: Check SPECIFIC RFCs FIRST (before generic fallbacks)
+  ;; Order: Taxes → Insurance → Telecom → Subscriptions → Business → Aggregators → Marketplaces → Generic
+  :priority-order [:sat-tax           ;; Tax authority (highest priority - specific RFC)
+                   :atlas-seguros      ;; Insurance (specific RFC)
+                   :att-mexico         ;; Telecom (specific RFC)
+                   :google-services    ;; Subscriptions
+                   :netflix
+                   :spotify
+                   :wise-payments      ;; Business income
+                   :clip               ;; Payment aggregators
+                   :zettle
+                   :stripe
+                   :payu
+                   :uber               ;; Marketplaces
+                   :amazon
+                   :airbnb
+                   :cobranza-generic   ;; Generic fallback (LAST - low confidence)
+                   ]}}

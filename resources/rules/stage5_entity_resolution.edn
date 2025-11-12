@@ -1,0 +1,36 @@
+;; ============================================================================
+;; Stage 5: Entity Resolution Rules
+;; ============================================================================
+
+{:resolution-strategy
+ {;; When to create new entity vs use existing
+  :auto-resolve-threshold 0.90  ;; If confidence >= 90%, auto-resolve to entity
+  :manual-review-threshold 0.70  ;; If < 70%, needs manual review
+
+  ;; Matching strategies
+  :match-by-merchant-id true     ;; First try exact merchant-id match
+  :match-by-alias true           ;; Then try alias matching
+  :match-by-rfc true             ;; Then try RFC matching (Mexican tax ID)
+
+  ;; Entity state transitions
+  :provisional-becomes-canonical-after 5  ;; 5 transactions → promote to canonical
+  :fallback-entities-are-provisional true ;; Fallback merchants start as provisional
+  :rule-matched-entities-are-canonical true}  ;; Rule-matched merchants are canonical
+
+ :entity-defaults
+ {;; Default values for new entities
+  :default-state :provisional
+  :default-needs-verification true
+  :verification-reasons
+  {:low-confidence "Confidence below manual review threshold"
+   :new-entity "First time seeing this merchant"
+   :fallback "Generated from fallback (no rule match)"
+   :conflict "Multiple entities match (needs disambiguation)"}}
+
+ :entity-metadata
+ {;; What metadata to track per entity
+  :track-first-seen true
+  :track-last-seen true
+  :track-transaction-count true
+  :track-aliases true
+  :track-confidence-history true}}

@@ -1,0 +1,242 @@
+(ns finance.merchant-extraction.stage4
+  "Stage 4: Entity Resolution (Registry Lookup + Manual Classification)"
+  (:require [finance.merchant-extraction.protocols :as proto]
+            [finance.entity-registry :as registry]
+            [clojure.string :as str]))
+
+;; ============================================================================
+;; Type-Aware Merchant Extraction
+;; ============================================================================
+
+(defn- extract-rfc-from-pattern
+  "Extracts RFC from matched pattern (e.g., 'RFC/CURP: SAT8410245V8' → 'SAT8410245V8')
+   RFC format: 3-4 letters + 6 digits + 3 alphanumeric characters"
+  [matched-pattern]
+  (when matched-pattern
+    (let [rfc-pattern #"([A-Z]{3,4}\d{6}[A-Z0-9]{3})"]
+      (when-let [match (re-find rfc-pattern matched-pattern)]
+        (if (string? match) match (second match))))))
+
+(defn- get-merchant-field-by-type
+  "Returns appropriate merchant field based on transaction type
+   Polymorphic merchant: meaning changes by type
+
+   PRIORITY:
+   1. If RFC extracted (from counterparty or direct) → use RFC (e.g., SAT8410245V8)
+   2. If beneficiary-name exists (SPEI/SWEB) → use beneficiary
+   3. If counterparty detected with actual-merchant-hint → use hint
+   4. Otherwise → use clean-merchant
+
+   For DOMICILIACION with generic merchant, the RFC IS the merchant identifier"
+  [clean-tx]
+  (let [tx-type (:type clean-tx)
+        clean-merchant (:clean-merchant clean-tx)
+        beneficiary (:beneficiary-name clean-tx)
+        counterparty-info (:counterparty-info clean-tx)
+        counterparty-detected? (:detected? counterparty-info false)
+
+        ;; Extract RFC from various sources
+        rfc-extracted (:rfc counterparty-info)  ;; Direct RFC extraction (Stage 2)
+        matched-pattern (:matched-pattern counterparty-info)  ;; Pattern that matched
+        rfc-from-pattern (extract-rfc-from-pattern matched-pattern)  ;; Extract from pattern
+
+        ;; Priority: use RFC if available (either extracted or from pattern)
+        final-rfc (or rfc-extracted rfc-from-pattern)
+
+        actual-merchant-hint (:actual-merchant-hint counterparty-info)]
+
+    ;; PRIORITY 1: If RFC available, use it (this is the actual merchant identifier)
+    (if final-rfc
+      final-rfc  ;; Use RFC as merchant (e.g., "SAT8410245V8", "CNM980114PI2")
+
+      ;; PRIORITY 2: No RFC, use type-specific logic
+      (case tx-type
+        ;; SPEI/SWEB transfers → use beneficiary name (person or business)
+        :spei beneficiary
+        :sweb beneficiary
+
+        ;; Domiciliación → try actual-merchant-hint or clean-merchant
+        :domiciliacion (or actual-merchant-hint clean-merchant)
+
+        ;; Card purchases → use actual-merchant-hint if available (e.g., "YOUTUBEPREMIUM" from "GOOGLE YOUTUBEPREMIUM")
+        :card-purchase (or actual-merchant-hint clean-merchant)
+        :card-withdrawal clean-merchant
+        :pos-purchase clean-merchant
+
+        ;; Default: use clean merchant
+        clean-merchant))))
+
+;; ============================================================================
+;; Registry Lookup
+;; ============================================================================
+
+(defn- lookup-in-registry
+  "Looks up merchant in registry, returns enrichment data or nil"
+  [merchant-text]
+  (when (and merchant-text (not= merchant-text ""))
+    (registry/lookup-merchant merchant-text)))
+
+;; ============================================================================
+;; Confidence Scoring for Entity Resolution
+;; ============================================================================
+
+(defn- calculate-entity-confidence
+  "Calculates confidence score for entity resolution
+   Factors:
+   - Registry match quality (exact vs substring)
+   - Previous stage confidence
+   - Unknown entity penalty"
+  [clean-tx registry-match]
+  (let [previous-confidence (:confidence clean-tx 0.5)]
+    (if registry-match
+      ;; Registry match found
+      (let [match-confidence (:confidence registry-match 0.8)
+            ;; Combine previous confidence with match confidence
+            combined (* previous-confidence match-confidence)]
+        combined)
+
+      ;; No registry match - unknown entity
+      ;; Reduce confidence significantly
+      (* previous-confidence 0.30))))
+
+;; ============================================================================
+;; Entity Resolver Implementation
+;; ============================================================================
+
+(defrecord EntityResolver [config]
+  proto/EntityResolver
+  (resolve-entity [this clean-tx]
+    ;; Get merchant field (works even without :clean-merchant if RFC exists)
+    (let [merchant-text (get-merchant-field-by-type clean-tx)]
+
+      ;; Only skip if NO merchant field could be extracted at all
+      (if-not merchant-text
+        ;; No merchant extracted AND no RFC, skip entity resolution
+        (merge clean-tx
+               {:entity-resolved? false
+                :stage-4 {:status :skipped
+                          :reason "No merchant extracted in Stage 3 and no RFC"
+                          :timestamp (java.time.Instant/now)}})
+
+        ;; Merchant text available (from :clean-merchant, beneficiary, or RFC)
+        (let [
+
+            ;; Look up in registry
+            registry-match (lookup-in-registry merchant-text)
+
+            ;; Calculate confidence
+            entity-confidence (calculate-entity-confidence clean-tx registry-match)]
+
+        (if registry-match
+          ;; Found in registry → resolve automatically
+          (merge clean-tx
+                 {:entity-resolved? true
+                  :canonical-merchant (:canonical-name registry-match)
+                  :merchant-category (:category registry-match)
+                  :entity-type (:entity-type registry-match)
+                  :confidence entity-confidence
+                  :stage-4 {:status :resolved
+                            :source :registry
+                            :match-type (:match-type registry-match)
+                            :merchant-id (:merchant-id registry-match)
+                            :original-text merchant-text
+                            :timestamp (java.time.Instant/now)}})
+
+          ;; Not found in registry → needs manual classification
+          (do
+            ;; Add to pending classification queue with FULL transaction context
+            (when merchant-text
+              (registry/add-pending-classification
+               merchant-text
+               clean-tx))  ;; Pass FULL transaction for complete provenance
+
+            ;; Return transaction with pending status
+            (merge clean-tx
+                   {:entity-resolved? false
+                    :canonical-merchant nil
+                    :merchant-category :unknown
+                    :entity-type :unknown
+                    :confidence entity-confidence
+                    :needs-manual-classification true
+                    :stage-4 {:status :pending-classification
+                              :source :unknown
+                              :original-text merchant-text
+                              :timestamp (java.time.Instant/now)}})))))))
+
+;; ============================================================================
+;; Factory Function
+;; ============================================================================
+
+(defn create-resolver
+  "Creates an EntityResolver instance"
+  ([]
+   (create-resolver {}))
+  ([config]
+   (->EntityResolver config)))
+
+;; ============================================================================
+;; Convenience Functions
+;; ============================================================================
+
+(defn resolve
+  "Convenience function to resolve entity with default resolver"
+  [clean-tx]
+  (let [resolver (create-resolver)]
+    (proto/resolve-entity resolver clean-tx)))
+
+(defn resolve-batch
+  "Resolves entities for batch of clean transactions"
+  [clean-txs]
+  (let [resolver (create-resolver)]
+    (map #(proto/resolve-entity resolver %) clean-txs)))
+
+;; ============================================================================
+;; Statistics & Analysis
+;; ============================================================================
+
+(defn resolution-statistics
+  "Returns statistics about entity resolution"
+  [resolved-txs]
+  (let [with-merchant (filter :clean-merchant resolved-txs)
+        resolved (filter :entity-resolved? with-merchant)
+        pending (filter :needs-manual-classification with-merchant)
+        by-source (group-by #(get-in % [:stage-4 :source]) resolved)
+        by-type (group-by :entity-type resolved)]
+    {:total-transactions (count resolved-txs)
+     :with-merchant (count with-merchant)
+     :resolved (count resolved)
+     :pending-manual-classification (count pending)
+     :resolution-rate (if (pos? (count with-merchant))
+                        (format "%.1f%%" (* 100.0 (/ (count resolved) (count with-merchant))))
+                        "N/A")
+     :avg-confidence (if (seq resolved)
+                       (/ (reduce + (map :confidence resolved))
+                          (count resolved))
+                       0)
+     :by-source (into {}
+                     (map (fn [[k v]]
+                            [k (count v)])
+                          by-source))
+     :by-entity-type (into {}
+                          (map (fn [[k v]]
+                                 [k (count v)])
+                               by-type))}))
+
+;; ============================================================================
+;; Validation
+;; ============================================================================
+
+(defn validate-resolved-transaction
+  "Validates that a resolved transaction has required fields"
+  [resolved-tx]
+  (and (contains? resolved-tx :stage-4)
+       (or (not (:clean-merchant resolved-tx))  ;; No merchant - stage-4 skipped
+           (:entity-resolved? resolved-tx)       ;; Entity resolved
+           (:needs-manual-classification resolved-tx))))  ;; Pending classification
+
+(defn validate-batch
+  "Validates batch of resolved transactions"
+  [resolved-txs]
+  {:valid (count (filter validate-resolved-transaction resolved-txs))
+   :invalid (count (remove validate-resolved-transaction resolved-txs))
+   :validation-errors (remove validate-resolved-transaction resolved-txs)})

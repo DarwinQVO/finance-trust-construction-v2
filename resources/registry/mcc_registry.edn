@@ -1,0 +1,84 @@
+{:mcc-codes
+ {5734 {:name "Computer Software Stores"
+        :budget-category "Technology"
+        :budget-subcategory "Software & Services"
+        :typical-flow "GASTO"
+        :tax-deductible {:business true :personal false}
+        :common-merchants ["Google Workspace" "Microsoft" "Adobe" "Zoom"]}
+
+  6300 {:name "Insurance Sales, Underwriting, and Premiums"
+        :budget-category "Insurance"
+        :budget-subcategory "Health & Life"
+        :typical-flow "GASTO"
+        :tax-deductible {:business true :personal true :sat-category "Gastos Médicos"}
+        :common-merchants ["Seguros Atlas" "Metlife" "AXA"]}
+
+  5411 {:name "Grocery Stores, Supermarkets"
+        :budget-category "Living"
+        :budget-subcategory "Groceries"
+        :typical-flow "GASTO"
+        :tax-deductible {:business false :personal false}
+        :common-merchants ["Oxxo" "Walmart" "Costco"]}
+
+  5812 {:name "Eating Places, Restaurants"
+        :budget-category "Living"
+        :budget-subcategory "Dining"
+        :typical-flow "GASTO"
+        :tax-deductible {:business true :personal false :condition "business meals only"}
+        :common-merchants ["Starbucks" "McDonald's" "Hanaichi" "Tere Cazola"]}
+
+  5541 {:name "Service Stations (with or without ancillary services)"
+        :budget-category "Transportation"
+        :budget-subcategory "Fuel"
+        :typical-flow "GASTO"
+        :tax-deductible {:business true :personal false}
+        :common-merchants ["Pemex" "Shell" "BP"]}
+
+  4814 {:name "Telecommunication Services"
+        :budget-category "Technology"
+        :budget-subcategory "Internet & Phone"
+        :typical-flow "GASTO"
+        :tax-deductible {:business true :personal false}
+        :common-merchants ["AT&T" "Telcel" "Telmex"]}
+
+  7372 {:name "Computer Programming, Data Processing"
+        :budget-category "Technology"
+        :budget-subcategory "Development Services"
+        :typical-flow "GASTO"
+        :tax-deductible {:business true :personal false}
+        :common-merchants ["AWS" "GitHub" "Vercel"]}
+
+  5999 {:name "Miscellaneous and Specialty Retail Stores"
+        :budget-category "Shopping"
+        :budget-subcategory "General Retail"
+        :typical-flow "GASTO"
+        :tax-deductible {:business false :personal false}
+        :common-merchants ["Amazon" "Mercado Libre"]}
+
+  8011 {:name "Doctors and Physicians (not elsewhere classified)"
+        :budget-category "Healthcare"
+        :budget-subcategory "Medical Services"
+        :typical-flow "GASTO"
+        :tax-deductible {:business false :personal true :sat-category "Gastos Médicos"}
+        :common-merchants ["BP Derma Colombiana" "Medical Offices"]}
+
+  5912 {:name "Drug Stores and Pharmacies"
+        :budget-category "Healthcare"
+        :budget-subcategory "Pharmacy"
+        :typical-flow "GASTO"
+        :tax-deductible {:business false :personal true :sat-category "Gastos Médicos"}
+        :common-merchants ["Farmacia del Ahorro" "Farmacia Paris" "CVS"]}
+
+  7911 {:name "Dance Halls, Studios and Schools"
+        :budget-category "Entertainment"
+        :budget-subcategory "Recreation"
+        :typical-flow "GASTO"
+        :tax-deductible {:business false :personal false}
+        :common-merchants ["Delphinus" "Acuario Cancun"]}
+
+  6537 {:name "Antique Reproductions and Antique Stores"
+        :budget-category "Home"
+        :budget-subcategory "Household"
+        :typical-flow "GASTO"
+        :tax-deductible {:business false :personal false}
+        :common-merchants ["Solution Cancun Storage"]}}}

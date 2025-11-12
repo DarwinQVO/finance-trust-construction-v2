@@ -1,0 +1,134 @@
+{:transaction-types
+
+ ;; ============================================================================
+ ;; Card Purchases (merchant expected)
+ ;; ============================================================================
+
+ {:card-purchase
+  {:description "Credit/Debit card purchases at merchants"
+   :patterns ["CARG RE" "REF\\." "AUT\\."]
+   :requires-all? false  ;; Match any pattern
+   :direction :expense
+   :merchant? true
+   :merchant-field :description  ;; Extract from description
+   :processing-strategy :remove-noise  ;; Remove transaction codes, numbers
+   :confidence 0.95}
+
+  ;; ============================================================================
+  ;; SPEI Transfers (NO merchant)
+  ;; ============================================================================
+
+  :spei-transfer-out
+  {:description "SPEI transfer outgoing (Mexican ACH)"
+   :patterns ["SPEI" "TRANSF\\.INTERB" "TRANSF INTERBANCARIA"]
+   :requires-all? false
+   :field :retiro  ;; Must have retiro (withdrawal)
+   :direction :transfer
+   :merchant? false
+   :confidence 0.98}
+
+  :spei-transfer-in
+  {:description "SPEI transfer incoming"
+   :patterns ["SPEI" "TRANSF\\.INTERB" "TRANSF INTERBANCARIA"]
+   :requires-all? false
+   :field :deposit  ;; Must have deposit
+   :direction :income
+   :merchant? true  ;; Changed: SPEI incoming could have beneficiary-name (sender)
+   :merchant-field :beneficiary-name  ;; Extract sender from beneficiary-name (PDF context)
+   :processing-strategy :use-as-is  ;; Use beneficiary name as-is (already clean from PDF)
+   :confidence 0.98}
+
+  ;; ============================================================================
+  ;; SWEB Transfers (Scotiabank internal, NO merchant)
+  ;; ============================================================================
+
+  :sweb-transfer-out
+  {:description "SWEB transfer outgoing (Scotiabank internal)"
+   :patterns ["SWEB"]
+   :field :retiro
+   :direction :transfer
+   :merchant? false
+   :confidence 0.98}
+
+  :sweb-transfer-in
+  {:description "SWEB transfer incoming"
+   :patterns ["SWEB"]
+   :field :deposit
+   :direction :income
+   :merchant? false
+   :confidence 0.98}
+
+  ;; ============================================================================
+  ;; Domiciliaciones (some are merchants, some aren't)
+  ;; ============================================================================
+
+  :domiciliacion
+  {:description "Automatic payment (subscription or utility)"
+   :patterns ["DOMICILIACION" "COBRANZA DOMICILIADA"]
+   :direction :expense
+   :merchant? true  ;; Many domiciliaciones are subscriptions
+   :confidence 0.85}
+
+  ;; ============================================================================
+  ;; Reversals (refunds, merchant expected)
+  ;; ============================================================================
+
+  :reversal
+  {:description "Transaction reversal/refund"
+   :patterns ["REV\\." "REVERSA"]
+   :direction :income
+   :merchant? true
+   :confidence 0.92}
+
+  ;; ============================================================================
+  ;; ATM Withdrawals (NO merchant)
+  ;; ============================================================================
+
+  :atm-withdrawal
+  {:description "Cash withdrawal from ATM"
+   :patterns ["ATM" "CAJERO"]
+   :direction :expense
+   :merchant? false
+   :confidence 0.95}
+
+  ;; ============================================================================
+  ;; Bank Fees (NO merchant)
+  ;; ============================================================================
+
+  :bank-fee
+  {:description "Bank service fees"
+   :patterns ["COMISION" "CUOTA" "FEE"]
+   :direction :expense
+   :merchant? true    ;; Changed: Attempt extraction even for fees (might have merchant context)
+   :confidence 0.70}  ;; Changed: Lower confidence since fees often don't have clear merchants
+
+  ;; ============================================================================
+  ;; Interest (NO merchant)
+  ;; ============================================================================
+
+  :interest-earned
+  {:description "Interest earned on account"
+   :patterns ["INTERES" "INTEREST"]
+   :field :deposit
+   :direction :income
+   :merchant? false
+   :confidence 0.95}}
+
+ ;; ============================================================================
+ ;; Pattern Matching Configuration
+ ;; ============================================================================
+
+ :matching-config
+ {:case-sensitive? false
+  :whole-word? false  ;; Patterns can match within words
+  :priority-order [:spei-transfer-in
+                   :spei-transfer-out
+                   :sweb-transfer-in
+                   :sweb-transfer-out
+                   :atm-withdrawal
+                   :interest-earned
+                   :reversal
+                   :domiciliacion     ;; Check domiciliacion BEFORE bank-fee
+                   :bank-fee          ;; (domiciliacion may contain "COMISION")
+                   :card-purchase]    ;; card-purchase last (most general)
+  }}

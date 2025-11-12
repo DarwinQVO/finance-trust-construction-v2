@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merchant Extraction Pipeline - Complete View</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .upload-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .upload-zone {
+            border: 2px dashed #667eea;
+            border-radius: 10px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8f9ff;
+        }
+
+        .upload-zone:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+
+        .upload-zone.dragover {
+            border-color: #764ba2;
+            background: #e8ebff;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 35px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 30px;
+            display: none;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            display: none;
+        }
+
+        .results.active {
+            display: block;
+        }
+
+        .tabs {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .tab-headers {
+            display: flex;
+            background: #f8f9ff;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .tab-header {
+            flex: 1;
+            padding: 18px 15px;
+            text-align: center;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            color: #666;
+        }
+
+        .tab-header:hover {
+            background: #f0f2ff;
+            color: #667eea;
+        }
+
+        .tab-header.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            background: white;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 25px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .stats-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .stat-box {
+            flex: 1;
+            min-width: 150px;
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border-left: 4px solid #667eea;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.85rem;
+            margin-top: 5px;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th {
+            background: #f8f9ff;
+            color: #667eea;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #e5e7eb;
+            position: sticky;
+            top: 0;
+            font-size: 0.9rem;
+        }
+
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.85rem;
+        }
+
+        tr:hover {
+            background: #f8f9ff;
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .badge-canonical {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-provisional {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-deposit {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-retiro {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            color: #667eea;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .error.active {
+            display: block;
+        }
+
+        .stage-info {
+            background: #f0f2ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .stage-info h3 {
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .stage-info p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Merchant Extraction Pipeline</h1>
+            <p>Pipeline completo de 5 etapas: PDF → Transacciones → Entity Resolution</p>
+        </div>
+
+        <div class="upload-card">
+            <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+                <div class="upload-icon">📄</div>
+                <div class="upload-text">Arrastra un PDF de Scotiabank o haz click</div>
+            </div>
+            <input type="file" id="fileInput" accept=".pdf" onchange="handleFileSelect(event)">
+            <div style="text-align: center;">
+                <button class="btn" id="uploadBtn" onclick="uploadFile()" disabled>Procesar PDF</button>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Procesando con pipeline completo (Stages 1-5)...</p>
+        </div>
+
+        <div class="error" id="error"></div>
+
+        <div class="results" id="results">
+            <div class="stats-row" id="statsRow"></div>
+
+            <div class="tabs">
+                <div class="tab-headers">
+                    <div class="tab-header active" onclick="switchTab('raw')">📄 PDF Extraído</div>
+                    <div class="tab-header" onclick="switchTab('stage1')">1️⃣ Type Detection</div>
+                    <div class="tab-header" onclick="switchTab('stage2')">2️⃣ Counterparty</div>
+                    <div class="tab-header" onclick="switchTab('stage3')">3️⃣ NER Clean</div>
+                    <div class="tab-header" onclick="switchTab('stage4')">4️⃣ Disambiguation</div>
+                    <div class="tab-header" onclick="switchTab('stage5')">5️⃣ Entity Resolution</div>
+                </div>
+
+                <div class="tab-content active" id="tab-raw">
+                    <div class="stage-info">
+                        <h3>Transacciones extraídas del PDF</h3>
+                        <p>Datos raw parseados del PDF de Scotiabank sin procesamiento.</p>
+                    </div>
+                    <div class="table-container" id="rawTable"></div>
+                </div>
+
+                <div class="tab-content" id="tab-stage1">
+                    <div class="stage-info">
+                        <h3>Stage 1: Transaction Type Detection</h3>
+                        <p>Clasifica transacciones en: DEPOSIT, RETIRO, PAGO_TARJETA, TRASPASO</p>
+                    </div>
+                    <div class="table-container" id="stage1Table"></div>
+                </div>
+
+                <div class="tab-content" id="tab-stage2">
+                    <div class="stage-info">
+                        <h3>Stage 2: Counterparty Detection</h3>
+                        <p>Detecta merchants conocidos: CLIP, ZETTLE, STRIPE, PAYU</p>
+                    </div>
+                    <div class="table-container" id="stage2Table"></div>
+                </div>
+
+                <div class="tab-content" id="tab-stage3">
+                    <div class="stage-info">
+                        <h3>Stage 3: NER Extraction (Limpieza)</h3>
+                        <p>Extrae el merchant real removiendo ruido (CARG RE, GOOGLE, etc.)</p>
+                    </div>
+                    <div class="table-container" id="stage3Table"></div>
+                </div>
+
+                <div class="tab-content" id="tab-stage4">
+                    <div class="stage-info">
+                        <h3>Stage 4: Merchant Disambiguation</h3>
+                        <p>Normaliza variaciones del mismo merchant (GOOGLE YOUTUBE → GOOGLE)</p>
+                    </div>
+                    <div class="table-container" id="stage4Table"></div>
+                </div>
+
+                <div class="tab-content" id="tab-stage5">
+                    <div class="stage-info">
+                        <h3>Stage 5: Entity Resolution</h3>
+                        <p>Crea entidades únicas y las marca como CANONICAL o PROVISIONAL</p>
+                    </div>
+                    <div class="table-container" id="stage5Table"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedFile = null;
+        let pipelineData = null;
+
+        const uploadZone = document.getElementById('uploadZone');
+
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type === 'application/pdf') {
+                selectedFile = file;
+                document.getElementById('uploadBtn').disabled = false;
+                uploadZone.querySelector('.upload-text').textContent = `✓ ${file.name}`;
+            }
+        });
+
+        function handleFileSelect(event) {
+            selectedFile = event.target.files[0];
+            if (selectedFile) {
+                document.getElementById('uploadBtn').disabled = false;
+                uploadZone.querySelector('.upload-text').textContent = `✓ ${selectedFile.name}`;
+            }
+        }
+
+        async function uploadFile() {
+            if (!selectedFile) return;
+
+            const formData = new FormData();
+            formData.append('pdf', selectedFile);
+
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('error').classList.remove('active');
+            document.getElementById('results').classList.remove('active');
+
+            try {
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    pipelineData = data;
+                    displayResults(data);
+                } else {
+                    showError(data.error || 'Error desconocido');
+                }
+            } catch (error) {
+                showError('Error: ' + error.message);
+            } finally {
+                document.getElementById('loading').classList.remove('active');
+            }
+        }
+
+        function displayResults(data) {
+            const stats = data['pipeline-results'].stats;
+            const transactions = data['pipeline-results'].transactions;
+
+            // Stats
+            document.getElementById('statsRow').innerHTML = `
+                <div class="stat-box">
+                    <div class="stat-value">${data['pdf-transactions']}</div>
+                    <div class="stat-label">PDF Transactions</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">${stats.total}</div>
+                    <div class="stat-label">Procesadas</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">${stats['unique-entities']}</div>
+                    <div class="stat-label">Entidades Únicas</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">${stats.canonical}</div>
+                    <div class="stat-label">Canonical</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">${stats.provisional}</div>
+                    <div class="stat-label">Provisional</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">${stats['needs-review']}</div>
+                    <div class="stat-label">Needs Review</div>
+                </div>
+            `;
+
+            // Tables
+            renderRawTable(transactions);
+            renderStage1Table(transactions);
+            renderStage2Table(transactions);
+            renderStage3Table(transactions);
+            renderStage4Table(transactions);
+            renderStage5Table(transactions);
+
+            document.getElementById('results').classList.add('active');
+        }
+
+        function renderRawTable(txs) {
+            document.getElementById('rawTable').innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Descripción (Completa)</th>
+                            <th>Monto</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${txs.map(tx => `
+                            <tr>
+                                <td>${tx.date || 'N/A'}</td>
+                                <td>
+                                    <div><strong>${tx.description || 'N/A'}</strong></div>
+                                    ${tx['context-lines'] && tx['context-lines'].length > 0 ? `
+                                        <div style="margin-top: 8px; padding-left: 10px; border-left: 3px solid #667eea; font-size: 0.9em; color: #555;">
+                                            ${tx['context-lines'].map(line => `<div style="margin: 2px 0;">${line}</div>`).join('')}
+                                        </div>
+                                    ` : ''}
+                                </td>
+                                <td>$${(tx.amount || 0).toLocaleString()}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function renderStage1Table(txs) {
+            document.getElementById('stage1Table').innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Descripción</th>
+                            <th>Tipo</th>
+                            <th>Deposit</th>
+                            <th>Retiro</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${txs.map(tx => `
+                            <tr>
+                                <td>${tx.date}</td>
+                                <td>${tx.description}</td>
+                                <td><span class="badge badge-${tx.deposit ? 'deposit' : 'retiro'}">${tx.deposit ? 'DEPOSIT' : 'RETIRO'}</span></td>
+                                <td>${tx.deposit ? '$' + tx.deposit.toLocaleString() : '-'}</td>
+                                <td>${tx.retiro ? '$' + tx.retiro.toLocaleString() : '-'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function renderStage2Table(txs) {
+            document.getElementById('stage2Table').innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Descripción</th>
+                            <th>🎯 Categoría Semántica</th>
+                            <th>Counterparty</th>
+                            <th>Confidence</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${txs.map(tx => {
+                            const semanticCategory = tx['semantic-category'];
+                            const counterpartyInfo = tx['counterparty-info'];
+                            const detected = counterpartyInfo && counterpartyInfo.detected;
+                            const counterpartyId = detected ? counterpartyInfo['counterparty-id'] : null;
+                            const counterpartyType = detected ? counterpartyInfo['counterparty-type'] : null;
+
+                            // Category badge styling
+                            const categoryBadge = semanticCategory ?
+                                `<span class="badge badge-${semanticCategory}" style="background: #667eea; color: white; padding: 4px 8px; border-radius: 4px;">
+                                    ${semanticCategory === 'subscription' ? '📺 Subscription' :
+                                      semanticCategory === 'taxes' ? '🏛️ Taxes' :
+                                      semanticCategory === 'business-income' ? '💼 Business Income' :
+                                      semanticCategory}
+                                </span>` :
+                                '<span style="color: #999;">-</span>';
+
+                            return `
+                            <tr>
+                                <td>${tx.date}</td>
+                                <td>${tx.description}</td>
+                                <td>${categoryBadge}</td>
+                                <td>
+                                    ${detected ? `
+                                        <div><strong>${counterpartyId}</strong></div>
+                                        <div style="font-size: 0.85em; color: #666;">${counterpartyType}</div>
+                                    ` : '<span style="color: #999;">Direct Merchant</span>'}
+                                </td>
+                                <td>${tx.confidence ? (tx.confidence * 100).toFixed(0) + '%' : 'N/A'}</td>
+                            </tr>
+                        `}).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function renderStage3Table(txs) {
+            document.getElementById('stage3Table').innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Descripción Original</th>
+                            <th>Merchant Extraído</th>
+                            <th>Limpio</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${txs.map(tx => `
+                            <tr>
+                                <td>${tx.date}</td>
+                                <td>${tx.description}</td>
+                                <td>${tx['merchant-name-raw'] || 'N/A'}</td>
+                                <td>${tx['is-clean'] ? '✓' : '✗'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function renderStage4Table(txs) {
+            document.getElementById('stage4Table').innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Raw Merchant</th>
+                            <th>Merchant ID</th>
+                            <th>Normalized</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${txs.map(tx => `
+                            <tr>
+                                <td>${tx.date}</td>
+                                <td>${tx['merchant-name-raw'] || 'N/A'}</td>
+                                <td>${tx['merchant-id'] || 'N/A'}</td>
+                                <td>${tx['merchant-name'] || 'N/A'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function renderStage5Table(txs) {
+            document.getElementById('stage5Table').innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Merchant</th>
+                            <th>Entity ID</th>
+                            <th>Estado</th>
+                            <th>Categoría</th>
+                            <th>Needs Review</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${txs.map(tx => `
+                            <tr>
+                                <td>${tx.date}</td>
+                                <td>${tx['merchant-name'] || 'N/A'}</td>
+                                <td>${tx['entity-id'] || 'N/A'}</td>
+                                <td><span class="badge badge-${tx['entity-state']}">${(tx['entity-state'] || 'N/A').toUpperCase()}</span></td>
+                                <td>${tx['merchant-category'] || 'N/A'}</td>
+                                <td>${tx['needs-verification'] ? '⚠️ YES' : '✓ NO'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-header').forEach(h => h.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tabName).classList.add('active');
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('active');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merchant Registry - Manual Review</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f5f7fa;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            margin-bottom: 30px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 1024px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .pending-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .pending-item {
+            background: #ecf0f1;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .pending-item:hover {
+            background: #d5dbdd;
+            transform: translateX(5px);
+        }
+
+        .pending-item.selected {
+            background: #3498db;
+            color: white;
+        }
+
+        .pending-merchant-text {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .pending-details {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .variation-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+
+        .btn-full {
+            width: 100%;
+        }
+
+        .tag {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            margin: 2px;
+        }
+
+        .tag-remove {
+            margin-left: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .tags-container {
+            min-height: 40px;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            padding: 5px;
+            margin-top: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #ecf0f1;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏦 Merchant Registry - Manual Review</h1>
+        <p class="subtitle">Revisa y clasifica merchants desconocidos del procesamiento de PDFs</p>
+
+        <!-- Statistics -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-label">Total Merchants</div>
+                <div class="stat-value" id="stat-total">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Variations</div>
+                <div class="stat-value" id="stat-variations">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Pendientes</div>
+                <div class="stat-value" id="stat-pending">-</div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content-grid">
+            <!-- Pending Merchants -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">📥 Merchants Pendientes (<span id="pending-count">0</span>)</div>
+                </div>
+                <div id="pending-list" class="pending-list">
+                    <div class="loading">Cargando...</div>
+                </div>
+            </div>
+
+            <!-- Classification Form -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">📝 Clasificar Merchant</div>
+                </div>
+                <div id="alert-container"></div>
+                <form id="classification-form">
+                    <div class="form-group">
+                        <label class="form-label">Canonical Name *</label>
+                        <input type="text" id="canonical-name" class="form-input" required placeholder="ej. Servicio de Administración Tributaria">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Category</label>
+                        <select id="category" class="form-select">
+                            <option value="taxes">Taxes</option>
+                            <option value="insurance">Insurance</option>
+                            <option value="utilities">Utilities</option>
+                            <option value="subscription">Subscription</option>
+                            <option value="shopping">Shopping</option>
+                            <option value="restaurants">Restaurants</option>
+                            <option value="transportation">Transportation</option>
+                            <option value="entertainment">Entertainment</option>
+                            <option value="healthcare">Healthcare</option>
+                            <option value="education">Education</option>
+                            <option value="family-loan">Family Loan</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Entity Type</label>
+                        <select id="entity-type" class="form-select">
+                            <option value="business">Business</option>
+                            <option value="person">Person</option>
+                            <option value="government">Government</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Variations</label>
+                        <div class="variation-input-group">
+                            <input type="text" id="new-variation" class="form-input" placeholder="Agregar variación...">
+                            <button type="button" class="btn btn-secondary" onclick="addVariation()">Agregar</button>
+                        </div>
+                        <div id="variations-tags" class="tags-container"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Notes (opcional)</label>
+                        <input type="text" id="notes" class="form-input" placeholder="Notas adicionales...">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-full">💾 Guardar Merchant</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- All Merchants Table -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">📊 Todos los Merchants (<span id="merchants-count">0</span>)</div>
+            </div>
+            <div style="overflow-x: auto;">
+                <table id="merchants-table">
+                    <thead>
+                        <tr>
+                            <th>Canonical Name</th>
+                            <th>Category</th>
+                            <th>Entity Type</th>
+                            <th>Variations</th>
+                        </tr>
+                    </thead>
+                    <tbody id="merchants-tbody">
+                        <tr>
+                            <td colspan="4" style="text-align: center; color: #7f8c8d;">Cargando...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let pendingMerchants = [];
+        let allMerchants = [];
+        let selectedPending = null;
+        let variations = [];
+
+        // Load data on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadAllData();
+            document.getElementById('classification-form').addEventListener('submit', handleSubmit);
+        });
+
+        async function loadAllData() {
+            await Promise.all([
+                loadPendingMerchants(),
+                loadAllMerchants(),
+                loadStats()
+            ]);
+        }
+
+        async function loadPendingMerchants() {
+            try {
+                const response = await fetch('/api/merchants/pending');
+                const data = await response.json();
+                pendingMerchants = data.pending || [];
+                renderPendingList();
+            } catch (error) {
+                console.error('Error loading pending merchants:', error);
+            }
+        }
+
+        async function loadAllMerchants() {
+            try {
+                const response = await fetch('/api/registry/merchants');
+                const data = await response.json();
+                allMerchants = data.merchants || [];
+                renderMerchantsTable();
+            } catch (error) {
+                console.error('Error loading merchants:', error);
+            }
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/registry/stats');
+                const data = await response.json();
+                const stats = data.stats;
+                document.getElementById('stat-total').textContent = stats['total-merchants'] || 0;
+                document.getElementById('stat-variations').textContent = stats['total-variations'] || 0;
+                document.getElementById('stat-pending').textContent = stats['pending-classifications'] || 0;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        function renderPendingList() {
+            const container = document.getElementById('pending-list');
+            document.getElementById('pending-count').textContent = pendingMerchants.length;
+
+            if (pendingMerchants.length === 0) {
+                container.innerHTML = '<div class="alert alert-success">✅ Todos los merchants han sido clasificados!</div>';
+                return;
+            }
+
+            container.innerHTML = pendingMerchants.map((merchant, idx) => `
+                <div class="pending-item ${selectedPending === merchant ? 'selected' : ''}" onclick="selectPending(${idx})">
+                    <div class="pending-merchant-text">${merchant['merchant-text']}</div>
+                    <div class="pending-details">
+                        Tipo: ${merchant['transaction-type']} •
+                        ${new Date(merchant.timestamp).toLocaleDateString()}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderMerchantsTable() {
+            const tbody = document.getElementById('merchants-tbody');
+            document.getElementById('merchants-count').textContent = allMerchants.length;
+
+            if (allMerchants.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No hay merchants registrados</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = allMerchants.map(merchant => `
+                <tr>
+                    <td><strong>${merchant['canonical-name']}</strong></td>
+                    <td><span class="tag">${merchant.category}</span></td>
+                    <td><span class="tag">${merchant['entity-type']}</span></td>
+                    <td>${(merchant.variations || []).slice(0, 3).join(', ')}${merchant.variations && merchant.variations.length > 3 ? '...' : ''}</td>
+                </tr>
+            `).join('');
+        }
+
+        function selectPending(idx) {
+            selectedPending = pendingMerchants[idx];
+            variations = [selectedPending['merchant-text']];
+
+            document.getElementById('canonical-name').value = selectedPending['merchant-text'];
+            document.getElementById('notes').value = `From transaction: ${selectedPending['transaction-id']}`;
+
+            renderPendingList();
+            renderVariations();
+
+            showAlert('Merchant seleccionado: ' + selectedPending['merchant-text'], 'info');
+        }
+
+        function addVariation() {
+            const input = document.getElementById('new-variation');
+            const value = input.value.trim();
+
+            if (value && !variations.includes(value)) {
+                variations.push(value);
+                input.value = '';
+                renderVariations();
+            }
+        }
+
+        function removeVariation(value) {
+            variations = variations.filter(v => v !== value);
+            renderVariations();
+        }
+
+        function renderVariations() {
+            const container = document.getElementById('variations-tags');
+            container.innerHTML = variations.map(v => `
+                <span class="tag">
+                    ${v}
+                    <span class="tag-remove" onclick="removeVariation('${v}')">×</span>
+                </span>
+            `).join('');
+        }
+
+        async function handleSubmit(e) {
+            e.preventDefault();
+
+            const canonicalName = document.getElementById('canonical-name').value.trim();
+            const category = document.getElementById('category').value;
+            const entityType = document.getElementById('entity-type').value;
+            const notes = document.getElementById('notes').value;
+
+            if (!canonicalName) {
+                showAlert('Por favor ingresa un canonical name', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/merchants/classify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        'canonical-name': canonicalName,
+                        'category': category,
+                        'entity-type': entityType,
+                        'variations': variations,
+                        'notes': notes
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('✅ Merchant clasificado exitosamente!', 'success');
+
+                    // Reset form
+                    document.getElementById('classification-form').reset();
+                    variations = [];
+                    selectedPending = null;
+                    renderVariations();
+
+                    // Reload data
+                    await loadAllData();
+                } else {
+                    throw new Error(result.error || 'Classification failed');
+                }
+            } catch (error) {
+                console.error('Error classifying merchant:', error);
+                showAlert('❌ Error: ' + error.message, 'error');
+            }
+        }
+
+        function showAlert(message, type = 'info') {
+            const container = document.getElementById('alert-container');
+            const className = type === 'success' ? 'alert-success' : 'alert-info';
+            container.innerHTML = `<div class="alert ${className}">${message}</div>`;
+
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

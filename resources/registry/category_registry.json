@@ -1,0 +1,144 @@
+{
+  "categories": {
+    "technology": {
+      "canonical-name": "Technology",
+      "parent-category": "business-expenses",
+      "budget-category": "Technology",
+      "budget-subcategory": "Software & Services",
+      "variations": [
+        "technology",
+        "tech",
+        "software",
+        "IT",
+        "utilities"
+      ],
+      "typical-tax-treatment": "business-deductible",
+      "typical-flow-type": "GASTO",
+      "icon": "💻"
+    },
+    "healthcare": {
+      "canonical-name": "Healthcare",
+      "parent-category": "personal-expenses",
+      "budget-category": "Healthcare",
+      "budget-subcategory": "Medical",
+      "variations": [
+        "healthcare",
+        "health",
+        "medical",
+        "pharmacy",
+        "doctor"
+      ],
+      "typical-tax-treatment": "medical-deductible",
+      "typical-flow-type": "GASTO",
+      "icon": "🏥"
+    },
+    "living": {
+      "canonical-name": "Living",
+      "parent-category": "personal-expenses",
+      "budget-category": "Living",
+      "budget-subcategory": "Groceries & Essentials",
+      "variations": [
+        "living",
+        "groceries",
+        "food",
+        "essentials",
+        "supermarket"
+      ],
+      "typical-tax-treatment": "non-deductible",
+      "typical-flow-type": "GASTO",
+      "icon": "🛒"
+    },
+    "entertainment": {
+      "canonical-name": "Entertainment",
+      "parent-category": "personal-expenses",
+      "budget-category": "Entertainment",
+      "budget-subcategory": "Recreation",
+      "variations": [
+        "entertainment",
+        "fun",
+        "recreation",
+        "leisure",
+        "restaurant"
+      ],
+      "typical-tax-treatment": "non-deductible",
+      "typical-flow-type": "GASTO",
+      "icon": "🎭"
+    },
+    "insurance": {
+      "canonical-name": "Insurance",
+      "parent-category": "protection",
+      "budget-category": "Insurance",
+      "budget-subcategory": "Health & Life",
+      "variations": [
+        "insurance",
+        "seguros",
+        "policy",
+        "premium"
+      ],
+      "typical-tax-treatment": "business-deductible",
+      "typical-flow-type": "GASTO",
+      "icon": "🛡️"
+    },
+    "home": {
+      "canonical-name": "Home",
+      "parent-category": "personal-expenses",
+      "budget-category": "Home",
+      "budget-subcategory": "Maintenance",
+      "variations": [
+        "home",
+        "house",
+        "housing",
+        "rent",
+        "utilities-home"
+      ],
+      "typical-tax-treatment": "non-deductible",
+      "typical-flow-type": "GASTO",
+      "icon": "🏠"
+    },
+    "transfer": {
+      "canonical-name": "Transfer",
+      "parent-category": "internal",
+      "budget-category": "Transfers",
+      "budget-subcategory": "Internal Movement",
+      "variations": [
+        "transfer",
+        "traspaso",
+        "movement",
+        "internal"
+      ],
+      "typical-tax-treatment": "non-deductible",
+      "typical-flow-type": "TRASPASO",
+      "icon": "🔄"
+    },
+    "income": {
+      "canonical-name": "Income",
+      "parent-category": "revenue",
+      "budget-category": "Income",
+      "budget-subcategory": "Service Revenue",
+      "variations": [
+        "income",
+        "revenue",
+        "ingreso",
+        "payment-received"
+      ],
+      "typical-tax-treatment": "taxable-income",
+      "typical-flow-type": "INGRESO",
+      "icon": "💰"
+    },
+    "unknown": {
+      "canonical-name": "Unknown",
+      "parent-category": "uncategorized",
+      "budget-category": "Uncategorized",
+      "budget-subcategory": "Other",
+      "variations": [
+        "unknown",
+        "uncategorized",
+        "other",
+        "misc"
+      ],
+      "typical-tax-treatment": "non-deductible",
+      "typical-flow-type": "DESCONOCIDO",
+      "icon": "❓"
+    }
+  }
+}

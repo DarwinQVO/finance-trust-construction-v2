@@ -1,0 +1,151 @@
+{:noise-patterns
+
+ ;; ============================================================================
+ ;; Transaction Metadata (always noise)
+ ;; ============================================================================
+
+ {:transaction-ids
+  {:description "Long numeric transaction IDs"
+   :regex "\\b\\d{14,20}\\b"
+   :priority 1}
+
+  :reference-numbers
+  {:description "Reference numbers (REF. + digits)"
+   :regex "REF\\. \\d+"
+   :priority 2}
+
+  :authorization-codes
+  {:description "Authorization codes (AUT. + digits)"
+   :regex "AUT\\. \\d+"
+   :priority 2}
+
+  :rfc-codes
+  {:description "Mexican tax IDs (RFC)"
+   :regex "RFC\\s+[A-Z0-9\\s]{12,15}"
+   :priority 3}
+
+  :rfc-curp-codes
+  {:description "RFC/CURP combined"
+   :regex "RFC/CURP:\\s*[A-Z0-9]+"
+   :priority 3}
+
+  ;; ============================================================================
+  ;; Currency & Exchange
+  ;; ============================================================================
+
+  :monto-origen
+  {:description "Original amount in foreign currency"
+   :regex "MONTO ORIGEN [\\d\\.,]+ [A-Z]{3}"
+   :priority 4}
+
+  :exchange-rate
+  {:description "Exchange rate (T/C)"
+   :regex "T/C [\\d\\.]+"
+   :priority 4}
+
+  ;; ============================================================================
+  ;; Location Information
+  ;; ============================================================================
+
+  :location-codes
+  {:description "Location postal codes"
+   :regex "\\b\\d{4,5}\\s+[A-Z]{2}\\b"
+   :priority 5}
+
+  :country-codes
+  {:description "3-letter country codes"
+   :regex "\\b[A-Z]{3}\\b(?=\\s|$)"
+   :priority 6}
+
+  :addresses
+  {:description "Street addresses with numbers"
+   :regex "\\b[A-Z]+\\s+\\d+\\b"
+   :priority 6}
+
+  ;; ============================================================================
+  ;; Transaction Types (context, keep separately)
+  ;; ============================================================================
+
+  :carg-re
+  {:description "Recurring charge indicator"
+   :regex "CARG\\s+RE(?:CUR\\.?)?"
+   :priority 7
+   :keep-as-context true}
+
+  :agregador
+  {:description "Aggregator indicator"
+   :regex "AGREGADOR"
+   :priority 7
+   :keep-as-context true}
+
+  ;; ============================================================================
+  ;; Website URLs (keep domain, remove rest)
+  ;; ============================================================================
+
+  :urls
+  {:description "Website URLs"
+   :regex "\\b[A-Z]+\\.[A-Z]{2,}/[A-Z]+"
+   :priority 8}
+
+  ;; ============================================================================
+  ;; Payment Details
+  ;; ============================================================================
+
+  :iva
+  {:description "IVA (Mexican VAT)"
+   :regex "IVA:\\s*[\\d\\.,]+"
+   :priority 9}
+
+  :folio
+  {:description "Folio numbers"
+   :regex "FOLIO\\s+[A-Z0-9]+"
+   :priority 9}
+
+  ;; ============================================================================
+  ;; Date/Time
+  ;; ============================================================================
+
+  :timestamps
+  {:description "Time stamps (HH:MM:SS)"
+   :regex "\\d{2}:\\d{2}:\\d{2}"
+   :priority 10}
+
+  :date-strings
+  {:description "Date strings (YYMMDD format)"
+   :regex "\\d{6,8}[A-Z0-9]{10}"
+   :priority 10}
+
+  ;; ============================================================================
+  ;; Abbreviations (at end)
+  ;; ============================================================================
+
+  :location-abbreviations
+  {:description "Location abbreviations (DP, NH, NLD)"
+   :regex "\\b(DP|NH|NLD|MX|USA?)\\b"
+   :priority 11}
+
+  :trailing-codes
+  {:description "Trailing alphanumeric codes"
+   :regex "\\b[A-Z0-9]{10,}\\b"
+   :priority 12}}
+
+ ;; ============================================================================
+ ;; Context Patterns (useful metadata to keep separate)
+ ;; ============================================================================
+
+ :context-patterns
+ {:useful-prefixes ["CARG RE" "CARG RECUR" "CLIP MX" "ZETTLE" "STRIPE" "PAYU"
+                    "STR AGREGADOR" "AGREGADOR"]
+  :useful-indicators ["RECUR" "RECURRING" "SUBSCRIPTION"]}
+
+ ;; ============================================================================
+ ;; Extraction Strategy
+ ;; ============================================================================
+
+ :extraction-config
+ {:min-merchant-length 3
+  :max-merchant-length 100
+  :trim-whitespace true
+  :collapse-spaces true
+  :remove-leading-numbers true
+  :stop-words ["DE" "LA" "EL" "LOS" "LAS"]}}

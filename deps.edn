@@ -14,6 +14,7 @@
         ;; CSV/JSON parsing
         org.clojure/data.csv {:mvn/version "1.0.1"}
         org.clojure/data.json {:mvn/version "2.4.0"}
+        cheshire/cheshire {:mvn/version "5.12.0"}  ; Better nil handling for JSON
 
         ;; Datomic - Immutable database with time-travel
         com.datomic/datomic-free {:mvn/version "0.9.5697"}
@@ -30,6 +31,9 @@
 
         ;; Logging
         com.taoensso/timbre {:mvn/version "6.3.1"}        ; Structured logging
+
+        ;; PDF Processing
+        org.apache.pdfbox/pdfbox {:mvn/version "2.0.29"}  ; PDF text extraction
 
         ;; Visualization & Development
         djblue/portal {:mvn/version "0.56.0"}

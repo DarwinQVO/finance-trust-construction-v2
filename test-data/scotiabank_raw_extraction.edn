@@ -1,0 +1,454 @@
+;; Scotiabank México - RAW EXTRACTION
+;; 3 PDFs: Julio, Agosto, Septiembre 2025
+;; Cuenta: 25604570372
+
+[
+ ;; ============================================================================
+ ;; PDF 1: JULIO (17-JUN-25 / 14-JUL-25)
+ ;; ============================================================================
+
+ ;; --- DEPOSITS (SPEI Transfers) - NO merchant ---
+ {:date "17-JUN-25"
+  :description "TRANSF INTERBANCARIA SPEI /S 250617011906042876I CAUICH BORGES DARWIN MANUEL"
+  :amount 3140.00
+  :type :deposit
+  :note "ACH transfer - NO merchant"}
+
+ {:date "30-JUN-25"
+  :description "TRANSF INTERBANCARIA SPEI /WISE PAYMENT 16 1394345045 WISE PAYMENTS LIMITED"
+  :amount 74940.97
+  :type :deposit
+  :note "International wire - Wise"}
+
+ {:date "03-JUL-25"
+  :description "TRANSF INTERBANCARIA SPEI /REMITTANCE TRAN CXCMSWXT3X0S WISE PAYMENTS LIMITED"
+  :amount 27838.26
+  :type :deposit
+  :note "International wire - Wise"}
+
+ ;; --- WITHDRAWALS - SPEI Transfers OUT (NO merchant) ---
+ {:date "30-JUN-25"
+  :description "SWEB TRANSF.INTERB SPEI SANTANDER TRANSFERENCIA A JESHUA /53232647"
+  :amount -20000.00
+  :type :withdrawal
+  :note "Bank transfer OUT - NO merchant"}
+
+ {:date "30-JUN-25"
+  :description "SWEB TRANSF.INTERB SPEI AZTECA TRANSFERENCIA A DARWIN /53230644"
+  :amount -14140.00
+  :type :withdrawal
+  :note "Bank transfer OUT - NO merchant"}
+
+ {:date "30-JUN-25"
+  :description "SWEB TRANSF.INTERB SPEI AZTECA TRANSFERENCIA A DARWIN /53250219"
+  :amount -5000.00
+  :type :withdrawal
+  :note "Bank transfer OUT - NO merchant"}
+
+ {:date "30-JUN-25"
+  :description "SWEB TRANSF.INTERB SPEI BANAMEX TRANSFERENCIA A DIANA /53228561"
+  :amount -20000.00
+  :type :withdrawal
+  :note "Bank transfer OUT - NO merchant"}
+
+ {:date "03-JUL-25"
+  :description "SWEB TRANSF.INTERB SPEI BANAMEX TRANSFERENCIA A DIANA /63832788"
+  :amount -20000.00
+  :type :withdrawal
+  :note "Bank transfer OUT - NO merchant"}
+
+ ;; --- DOMICILIACIONES (Automatic payments - NO merchant in traditional sense) ---
+ {:date "18-JUN-25"
+  :description "03 POR COBRANZA DOMICILIADA 926249688 RFC/CURP: SAT8410245V8"
+  :amount -3139.82
+  :type :withdrawal
+  :note "SAT (Tax payment) - IS this a merchant or government service?"}
+
+ {:date "01-JUL-25"
+  :description "03 POR COBRANZA DOMICILIADA 959450444 RFC/CURP: CNM980114PI2"
+  :amount -1076.00
+  :type :withdrawal
+  :note "Automatic payment - Telecom? (CNM = company RFC)"}
+
+ ;; --- CARD PURCHASES - SÍ tienen merchant (CRITICAL TEST CASES) ---
+ {:date "26-JUN-25"
+  :description "GOOGLE YOUTUBEPREMIUM CARG RE 00000000517719716538 MONTO ORIGEN 159.00 REF. 0013732041 AUT. 305884"
+  :amount -159.00
+  :type :card-purchase
+  :note "Subscription - Google/YouTube"}
+
+ {:date "30-JUN-25"
+  :description "GOOGLE ONE GOOGLE ONE 00000000518111288687 MONTO ORIGEN 395.00 REF. 0013732041 AUT. 162115"
+  :amount -395.00
+  :type :card-purchase
+  :note "Subscription - Google One (storage)"}
+
+ {:date "04-JUL-25"
+  :description "BP DERMA COLOMBIANA 00000000000117328035 BP DERMA COLOMBIANA AV REF. 0013732041 AUT. 242516 RFC DCO 110714JH9"
+  :amount -9429.00
+  :type :card-purchase
+  :note "Medical/Pharmacy - BP Derma"}
+
+ {:date "14-JUL-25"
+  :description "FARM PARIS YAXCHILAN 00000000921275715366 FARM PARIS YAXCHILAN A REF. 0013732041 AUT. 635947 RFC PIF 880519GH0"
+  :amount -2080.00
+  :type :card-purchase
+  :note "Pharmacy - Farmacia Paris"}
+
+ ;; ============================================================================
+ ;; PDF 2: AGOSTO (15-JUL-25 / 14-AGO-25)
+ ;; ============================================================================
+
+ ;; --- DEPOSITS ---
+ {:date "15-JUL-25"
+  :description "TRANSF INTERBANCARIA SPEI /S 250715012379658573I CAUICH BORGES DARWIN MANUEL"
+  :amount 60.00
+  :type :deposit
+  :note "Small ACH transfer"}
+
+ {:date "17-JUL-25"
+  :description "TRANSF INTERBANCARIA SPEI /REMITTANCE TRAN D442SC1TRZKC WISE PAYMENTS LIMITED"
+  :amount 9283.75
+  :type :deposit
+  :note "Wise international wire"}
+
+ {:date "21-JUL-25"
+  :description "TRANSF INTERBANCARIA SPEI /DEVOLUCION RENT MBAN01002507210080324642 JESUS TORRES MONTIEL"
+  :amount 20000.00
+  :type :deposit
+  :note "Rent refund - person to person"}
+
+ {:date "23-JUL-25"
+  :description "TRANSF INTERBANCARIA SPEI /REMITTANCE TRAN D6RCR98085JR WISE PAYMENTS LIMITED"
+  :amount 9283.35
+  :type :deposit
+  :note "Wise international wire"}
+
+ ;; --- WITHDRAWALS - Transfers OUT ---
+ {:date "17-JUL-25"
+  :description "SWEB TRANSF.INTERB SPEI INBURSA TRANSFERENCIA A STORAGE /00550705"
+  :amount -4756.00
+  :type :withdrawal
+  :note "Storage facility - not a card purchase"}
+
+ {:date "22-JUL-25"
+  :description "SWEB TRANSF.INTERB SPEI BANAMEX TRANSFERENCIA A DIANA /17391383"
+  :amount -15000.00
+  :type :withdrawal
+  :note "Bank transfer OUT"}
+
+ {:date "25-AGO-25"
+  :description "SWEB TRANSF.INTERB SPEI BANAMEX TRANSFERENCIA A DIANA /14561424"
+  :amount -5000.00
+  :type :withdrawal
+  :note "Bank transfer OUT"}
+
+ {:date "04-SEP-25"
+  :description "SWEB TRANSF.INTERB SPEI AZTECA TRANSFERENCIA A DARWIN /44775885"
+  :amount -9000.00
+  :type :withdrawal
+  :note "Bank transfer OUT"}
+
+ {:date "04-SEP-25"
+  :description "SWEB TRANSF.INTERB SPEI BANAMEX TRANSFERENCIA A DIANA /44779117"
+  :amount -20000.00
+  :type :withdrawal
+  :note "Bank transfer OUT"}
+
+ {:date "04-SEP-25"
+  :description "SWEB TRANSF.INTERB SPEI BANAMEX TRANSFERENCIA A DIANA /45000807"
+  :amount -10000.00
+  :type :withdrawal
+  :note "Bank transfer OUT"}
+
+ ;; --- DOMICILIACIONES (Automatic payments) ---
+ {:date "16-JUL-25"
+  :description "SEG ATLAS IVR 00000000000265859702 SEG ATLAS IVR PASEO DE REF. 0013732041 AUT. 695239 RFC SAT 8410245V8"
+  :amount -10695.61
+  :type :withdrawal
+  :note "Insurance - Atlas"}
+
+ {:date "17-JUL-25"
+  :description "03 POR COBRANZA DOMICILIADA 1004624944 RFC/CURP: SAT8410245V8"
+  :amount -3139.82
+  :type :withdrawal
+  :note "SAT tax payment"}
+
+ {:date "29-JUL-25"
+  :description "03 POR COBRANZA DOMICILIADA 1034526036 RFC/CURP: CNM980114PI2"
+  :amount -1076.00
+  :type :withdrawal
+  :note "Telecom automatic payment"}
+
+ {:date "18-AGO-25"
+  :description "03 POR COBRANZA DOMICILIADA 1097918137 RFC/CURP: SAT8410245V8"
+  :amount -3139.82
+  :type :withdrawal
+  :note "SAT tax payment"}
+
+ {:date "10-SEP-25"
+  :description "MI ATT A APP PS 1160533319 MI ATT A APP PS RIO LE REF. 0013732041 AUT. 533319 RFC CNM 980114PI2"
+  :amount -1076.00
+  :type :withdrawal
+  :note "AT&T Mexico - telecom"}
+
+ ;; --- CARD PURCHASES - Merchants to extract ---
+ {:date "21-JUL-25"
+  :description "OXXO TAKH CUN 00000000001494352371 OXXO TAKH CUN BENITO REF. 0013732041 AUT. 996688 RFC CCO 8605231N4"
+  :amount -120.00
+  :type :card-purchase
+  :note "OXXO convenience store"}
+
+ {:date "22-JUL-25"
+  :description "GOOGLE ONE GOOGLE ONE CARG RE 00000000520320657376 MONTO ORIGEN 395.00 REF. 0013732041 AUT. 980331"
+  :amount -395.00
+  :type :card-purchase
+  :note "Google One subscription"}
+
+ {:date "28-JUL-25"
+  :description "GOOGLE YOUTUBEPREMIUM CARG RE 00000000520719818235 MONTO ORIGEN 159.00 REF. 0013732041 AUT. 000171"
+  :amount -159.00
+  :type :card-purchase
+  :note "YouTube Premium subscription"}
+
+ {:date "29-JUL-25"
+  :description "03 POR COBRANZA DOMICILIADA 1034526036 RFC/CURP: CNM980114PI2"
+  :amount -1076.00
+  :type :card-purchase
+  :note "Telecom - CNM company"}
+
+ {:date "31-JUL-25"
+  :description "F AHORRO CNHU HUAYACAN 00000000110242628939 F AHORRO CNHU HUAYACAN REF. 0013732041 AUT. 304388 RFC CFC 110121742"
+  :amount -1298.00
+  :type :card-purchase
+  :note "Grocery store - Chedraui"}
+
+ {:date "01-AGO-25"
+  :description "PAYU GOOGLE CLOUDS CARG RECUR. 00000000000047418850 PAYU GOOGLE CLOUD M REF. 0013732041 AUT. 437902 RFC GCM 221031837"
+  :amount -4.92
+  :type :card-purchase
+  :note "Google Cloud via PayU (payment processor!)"}
+
+ {:date "04-AGO-25"
+  :description "WALMART PASEO FUENTES 00000000000000050839 WALMART PASEO FUENTES REF. 0013732041 AUT. 240977 RFC NWM 9709244W4"
+  :amount -188.00
+  :type :card-purchase
+  :note "Walmart"}
+
+ {:date "05-AGO-25"
+  :description "MISC TERE CAZOLA HUAYA 00000000051016013351 MISC TERE CAZOLA HUAYA REF. 0013732041 AUT. 202294 RFC RFQ 150114L49"
+  :amount -330.00
+  :type :card-purchase
+  :note "Miscelánea (convenience store)"}
+
+ {:date "08-AGO-25"
+  :description "FARM PARIS YAXCHILAN 00000000821310896441 FARM PARIS YAXCHILAN A REF. 0013732041 AUT. 789331 RFC PIF 880519GH0"
+  :amount -1190.00
+  :type :card-purchase
+  :note "Pharmacy - Farmacia Paris"}
+
+ {:date "08-AGO-25"
+  :description "FARM PARIS YAXCHILAN 00000000921304503809 FARM PARIS YAXCHILAN A REF. 0013732041 AUT. 791861 RFC PIF 880519GH0"
+  :amount -1190.00
+  :type :card-purchase
+  :note "Duplicate - same merchant, same day"}
+
+ {:date "11-AGO-25"
+  :description "CLIPMX AGREGADOR 00000000101008685717 CLIP MX REST HANAICHI REF. 0013732041 AUT. 742785 RFC BLI 120726UF6"
+  :amount -2236.00
+  :type :card-purchase
+  :note "CLIP (payment aggregator) - Restaurant Hanaichi"}
+
+ {:date "11-AGO-25"
+  :description "ACUARIO INTERACTIVO 1070471928 ACUARIO INTERACTIVO B REF. 0013732041 AUT. 471928 RFC OXU 080111NS1"
+  :amount -200.00
+  :type :card-purchase
+  :note "Interactive aquarium - tourism"}
+
+ {:date "11-AGO-25"
+  :description "ZETTLE RESTS 00000000223957061759 ZTL PASIONPORLOSHELADO REF. 0013732041 AUT. 504844 RFC OPM 150323DI1"
+  :amount -220.00
+  :type :card-purchase
+  :note "ZETTLE (aggregator) - Ice cream shop"}
+
+ {:date "11-AGO-25"
+  :description "STR VALIDATION 00000000161007670454 STR DELPHINUS WEB PASE REF. 0013732041 AUT. 150811 RFC SPM 1410037E8"
+  :amount -1.00
+  :type :card-purchase
+  :note "STRIPE validation - $1.00 test charge"}
+
+ {:date "11-AGO-25"
+  :description "STR AGREGADOR CARG RECUR. 00000000522310646921 STRIPE DELPHINUS WEB REF. 0013732041 AUT. 150821 RFC SPM 1410037E8"
+  :amount -919.60
+  :type :card-purchase
+  :note "STRIPE (aggregator) - Delphinus web"}
+
+ {:date "11-AGO-25"
+  :description "REV.STR AGREGADOR CARG RECUR. 00000000522310646921 STRIPE DELPHINUS WEB"
+  :amount 919.60
+  :type :reversal
+  :note "Reversal - refund of previous charge"}
+
+ {:date "11-AGO-25"
+  :description "REV.STR VALIDATION 00000000161007670454 STR DELPHINUS WEB PASE"
+  :amount 1.00
+  :type :reversal
+  :note "Reversal - refund of validation charge"}
+
+ {:date "11-AGO-25"
+  :description "STR AGREGADOR 00000000522310706142 STRIPE DELPHINUS WEB"
+  :amount -1.00
+  :type :card-purchase
+  :note "STRIPE validation - $1.00 again"}
+
+ {:date "11-AGO-25"
+  :description "STR AGREGADOR CARG RECUR. 00000000522310694226 STRIPE DELPHINUS WEB"
+  :amount -919.60
+  :type :card-purchase
+  :note "STRIPE charge again"}
+
+ {:date "11-AGO-25"
+  :description "REV.STR AGREGADOR CARG RECUR. 00000000522310694226 STRIPE DELPHINUS WEB"
+  :amount 919.60
+  :type :reversal
+  :note "Reversal again"}
+
+ {:date "11-AGO-25"
+  :description "REV.STR AGREGADOR 00000000522310706142 STRIPE DELPHINUS WEB"
+  :amount 1.00
+  :type :reversal
+  :note "Reversal of validation"}
+
+ {:date "11-AGO-25"
+  :description "DIV XJ PUERTO CANCUN 00000000000925285866 DIV XJ PUERTO CANCUN E REF. 0013732041 AUT. 161856 RFC IVI 150617G61"
+  :amount -580.00
+  :type :card-purchase
+  :note "Entertainment - XJ Puerto Cancun"}
+
+ {:date "18-AGO-25"
+  :description "F AHORRO CNHU HUAYACAN 00000000110244896182 F AHORRO CNHU HUAYACAN REF. 0013732041 AUT. 312383 RFC CFC 110121742"
+  :amount -2087.00
+  :type :card-purchase
+  :note "Grocery - Chedraui"}
+
+ {:date "19-AGO-25"
+  :description "OPENAI CHATGPT SUBSCR CARG RE 00000000523115813346 MONTO ORIGEN 200.00 USD USD T/C 18.7840"
+  :amount -3775.58
+  :type :card-purchase
+  :note "OpenAI ChatGPT - USD charge with exchange rate"}
+
+ {:date "22-AGO-25"
+  :description "GOOGLE ONE GOOGLE ONE CARG RE 00000000523420687072 MONTO ORIGEN 395.00"
+  :amount -395.00
+  :type :card-purchase
+  :note "Google One subscription"}
+
+ {:date "26-AGO-25"
+  :description "GOOGLE YOUTUBEPREMIUM CARG RE 00000000523819718819 MONTO ORIGEN 159.00"
+  :amount -159.00
+  :type :card-purchase
+  :note "YouTube Premium subscription"}
+
+ {:date "27-AGO-25"
+  :description "FARM PARIS YAXCHILAN 00000000921324246481 FARM PARIS YAXCHILAN A REF. 0013732041 AUT. 848857 RFC PIF 880519GH0"
+  :amount -1885.00
+  :type :card-purchase
+  :note "Pharmacy - Farmacia Paris"}
+
+ {:date "01-SEP-25"
+  :description "PAYU GOOGLE CLOUDS CARG RECUR. 00000000000058522165 PAYU GOOGLE CLOUD M REF. 0013732041 AUT. 444217 RFC GCM 221031837"
+  :amount -55.77
+  :type :card-purchase
+  :note "Google Cloud via PayU"}
+
+ {:date "05-SEP-25"
+  :description "F AHORRO CNHU HUAYACAN 00000000110247652729 F AHORRO CNHU HUAYACAN REF. 0013732041 AUT. 529800 RFC CFC 110121742"
+  :amount -884.00
+  :type :card-purchase
+  :note "Grocery - Chedraui"}
+
+ ;; ============================================================================
+ ;; PDF 3: SEPTIEMBRE (15-AGO-25 / 15-SEP-25)
+ ;; ============================================================================
+
+ ;; --- DEPOSITS ---
+ {:date "18-AGO-25"
+  :description "TRANSF INTERBANCARIA SPEI REMITTANCE TRANSACTION /JP MORGAN DL9VPFXGZ6WL WISE PAYMENTS LIMITED"
+  :amount 9237.04
+  :type :deposit
+  :note "Wise via JP Morgan"}
+
+ {:date "04-SEP-25"
+  :description "TRANSF INTERBANCARIA SPEI WISE PAYMENT 1698058709 /STP 1486615856 WISE PAYMENTS LIMITED"
+  :amount 46287.14
+  :type :deposit
+  :note "Large Wise transfer"}
+
+ {:date "11-SEP-25"
+  :description "TRANSF INTERBANCARIA SPEI REMITTANCE TRANSACTION /JP MORGAN DXS7W4Z012FQ WISE PAYMENTS LIMITED"
+  :amount 18474.86
+  :type :deposit
+  :note "Wise via JP Morgan"}
+
+ ;; --- WITHDRAWALS - Transfers OUT ---
+ {:date "18-AGO-25"
+  :description "SWEB TRANSF.INTERB SPEI INBURSA TRANSFERENCIA A STORAGE /93327057"
+  :amount -4756.00
+  :type :withdrawal
+  :note "Storage facility"}
+
+ {:date "04-SEP-25"
+  :description "SWEB TRANSF.INTERB SPEI AZTECA TRANSFERENCIA A DARWIN /44775885"
+  :amount -9000.00
+  :type :withdrawal
+  :note "Bank transfer OUT"}
+
+ {:date "04-SEP-25"
+  :description "SWEB TRANSF.INTERB SPEI BANAMEX TRANSFERENCIA A DIANA /44779117"
+  :amount -20000.00
+  :type :withdrawal
+  :note "Bank transfer OUT"}
+
+ {:date "04-SEP-25"
+  :description "SWEB TRANSF.INTERB SPEI BANAMEX TRANSFERENCIA A DIANA /45000807"
+  :amount -10000.00
+  :type :withdrawal
+  :note "Bank transfer OUT"}
+
+ ;; --- CARD PURCHASES ---
+ {:date "15-SEP-25"
+  :description "CIRCUS CANCUN 00000000731377898642 CIRCUS CANCUN BLVD KUK REF. 0013732041 AUT. 689767 RFC CPA 1201121Z3"
+  :amount -150.00
+  :type :card-purchase
+  :note "Circus Park - entertainment"}
+
+ {:date "15-SEP-25"
+  :description "CIRCUS PARK BLVB KUKUL 00000000851336091087 CIRCUS PARK BLVB KUKUL REF. 0013732041 AUT. 711869 RFC CPA 1201121Z3"
+  :amount -50.00
+  :type :card-purchase
+  :note "Circus Park"}
+
+ {:date "15-SEP-25"
+  :description "CIRCUS PARK BLVB KUKUL 00000000821347240158 CIRCUS PARK BLVB KUKUL REF. 0013732041 AUT. 729875 RFC CPA 1201121Z3"
+  :amount -100.00
+  :type :card-purchase
+  :note "Circus Park - 3 transactions same merchant"}
+
+ {:date "15-SEP-25"
+  :description "BPK FASTFOOD ROLANDIS 00000000000123887089 BPK FASTFOOD ROLANDIS REF. 0013732041 AUT. 767305 RFC FEV 080728P11"
+  :amount -600.60
+  :type :card-purchase
+  :note "Fast food - Burger King?"}
+
+ {:date "15-SEP-25"
+  :description "OXXO SANDIA 00000000001733390649 OXXO SANDIA CANCUN QR REF. 0013732041 AUT. 788617 RFC CCO 8605231N4"
+  :amount -31.00
+  :type :card-purchase
+  :note "OXXO convenience store"}
+
+ {:date "15-SEP-25"
+  :description "CLIP MX AGREGADOR 00000000731377997131 CLIP MX REST LOS DE AS REF. 0013732041 AUT. 795167 RFC BLI 120726UF6"
+  :amount -230.00
+  :type :card-purchase
+  :note "CLIP (aggregator) - Restaurant"}
+]

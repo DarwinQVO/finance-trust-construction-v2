@@ -1,0 +1,87 @@
+{
+  "banks": {
+    "scotiabank": {
+      "canonical-name": "Scotiabank",
+      "bank-type": "traditional",
+      "country": "Mexico",
+      "currency": "MXN",
+      "variations": [
+        "SCOTIABANK",
+        "Scotiabank",
+        "Scotia",
+        "BANCO SCOTIABANK",
+        "scotiabank"
+      ],
+      "default-payment-method": "Debit/Checking",
+      "supports-spei": true,
+      "supports-cards": true
+    },
+    "bofa": {
+      "canonical-name": "Bank of America",
+      "bank-type": "traditional",
+      "country": "USA",
+      "currency": "USD",
+      "variations": [
+        "Bank of America",
+        "BofA",
+        "BANK OF AMERICA",
+        "BANK OF AMERICA NA",
+        "B of A",
+        "bofa"
+      ],
+      "default-payment-method": "Debit/Checking",
+      "supports-spei": false,
+      "supports-cards": true
+    },
+    "apple-card": {
+      "canonical-name": "Apple Card",
+      "bank-type": "credit-card",
+      "country": "USA",
+      "currency": "USD",
+      "variations": [
+        "Apple Card",
+        "APPLE CARD",
+        "AppleCard",
+        "apple-card"
+      ],
+      "default-payment-method": "Credit Card",
+      "payment-network": "Apple Card",
+      "supports-spei": false,
+      "supports-cards": true
+    },
+    "stripe": {
+      "canonical-name": "Stripe",
+      "bank-type": "payment-processor",
+      "country": "USA",
+      "currency": "USD",
+      "variations": [
+        "Stripe",
+        "STRIPE",
+        "Stripe Inc",
+        "STRIPE INC",
+        "stripe"
+      ],
+      "default-payment-method": "Online Payment",
+      "payment-network": "Stripe",
+      "supports-spei": false,
+      "supports-cards": true
+    },
+    "wise": {
+      "canonical-name": "Wise",
+      "bank-type": "international-transfer",
+      "country": "UK",
+      "currency": "Multi-currency",
+      "variations": [
+        "Wise",
+        "WISE",
+        "TransferWise",
+        "TRANSFERWISE",
+        "wise"
+      ],
+      "default-payment-method": "International Transfer",
+      "payment-network": "Wise",
+      "supports-spei": false,
+      "supports-cards": false
+    }
+  }
+}

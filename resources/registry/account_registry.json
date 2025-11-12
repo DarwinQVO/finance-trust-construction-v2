@@ -1,0 +1,85 @@
+{
+  "accounts": {
+    "scotiabank-checking": {
+      "canonical-name": "Scotiabank Checking",
+      "bank-entity": "scotiabank",
+      "account-type": "checking",
+      "currency": "MXN",
+      "variations": [
+        "Scotiabank Checking",
+        "Scotia Checking",
+        "SCOTIABANK CUENTA",
+        "scotiabank checking"
+      ],
+      "payment-method": "Debit/Checking",
+      "payment-network": "Scotiabank",
+      "supports-spei": true,
+      "supports-cards": false
+    },
+    "bofa-checking": {
+      "canonical-name": "BofA Checking",
+      "bank-entity": "bofa",
+      "account-type": "checking",
+      "currency": "USD",
+      "variations": [
+        "BofA Checking",
+        "Bank of America Checking",
+        "BOFA CHECKING",
+        "bofa checking"
+      ],
+      "payment-method": "Debit/Checking",
+      "payment-network": "Bank of America",
+      "supports-spei": false,
+      "supports-cards": true
+    },
+    "apple-card-credit": {
+      "canonical-name": "Apple Card",
+      "bank-entity": "apple-card",
+      "account-type": "credit-card",
+      "currency": "USD",
+      "variations": [
+        "Apple Card",
+        "APPLE CARD",
+        "AppleCard",
+        "apple card"
+      ],
+      "payment-method": "Credit Card",
+      "payment-network": "Apple Card",
+      "supports-spei": false,
+      "supports-cards": true
+    },
+    "stripe-balance": {
+      "canonical-name": "Stripe Balance",
+      "bank-entity": "stripe",
+      "account-type": "payment-processor",
+      "currency": "USD",
+      "variations": [
+        "Stripe",
+        "Stripe Balance",
+        "STRIPE BALANCE",
+        "stripe balance"
+      ],
+      "payment-method": "Online Payment",
+      "payment-network": "Stripe",
+      "supports-spei": false,
+      "supports-cards": true
+    },
+    "wise-multi": {
+      "canonical-name": "Wise Multi-Currency",
+      "bank-entity": "wise",
+      "account-type": "multi-currency",
+      "currency": "Multi",
+      "variations": [
+        "Wise",
+        "Wise Account",
+        "WISE ACCOUNT",
+        "TransferWise",
+        "wise account"
+      ],
+      "payment-method": "International Transfer",
+      "payment-network": "Wise",
+      "supports-spei": false,
+      "supports-cards": false
+    }
+  }
+}

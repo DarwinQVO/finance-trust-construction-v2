@@ -1,0 +1,330 @@
+{
+  "merchants": {
+    "bp-derma-colombiana": {
+      "category": "healthcare",
+      "mcc-description": "Doctors and Physicians (not elsewhere classified)",
+      "merchant-id": "bp-derma-colombiana",
+      "entity-type": "business",
+      "mcc": 8011,
+      "canonical-name": "BP DERMA COLOMBIANA",
+      "budget-subcategory": "Medical Services",
+      "variations": [
+        "BP DERMA AV",
+        "BP DERMA AV"
+      ],
+      "tax-hints": {
+        "business-deductible": false,
+        "personal-deductible": true,
+        "sat-category": "Gastos M\u00e9dicos"
+      },
+      "typical-flow-type": "GASTO",
+      "budget-category": "Healthcare"
+    },
+    "walmart": {
+      "category": "groceries",
+      "mcc-description": "Grocery Stores, Supermarkets",
+      "merchant-id": "walmart",
+      "entity-type": "business",
+      "mcc": 5411,
+      "canonical-name": "WALMART",
+      "budget-subcategory": "Groceries",
+      "variations": [
+        "WALMART PASEO FUENTES"
+      ],
+      "tax-hints": {
+        "business-deductible": false,
+        "personal-deductible": false
+      },
+      "typical-flow-type": "GASTO",
+      "budget-category": "Living"
+    },
+    "jesus-torres-renta": {
+      "canonical-name": "JESUS TORRES RENTA",
+      "category": "home",
+      "entity-type": "person",
+      "variations": [
+        "JESUS TORRES MONTIEL"
+      ]
+    },
+    "farmacia-del-ahorro": {
+      "category": "healthcare",
+      "mcc-description": "Drug Stores and Pharmacies",
+      "merchant-id": "farmacia-del-ahorro",
+      "entity-type": "business",
+      "mcc": 5912,
+      "canonical-name": "FARMACIA DEL AHORRO",
+      "budget-subcategory": "Pharmacy",
+      "variations": [
+        "F AHORRO CNHU HUAYACAN"
+      ],
+      "tax-hints": {
+        "business-deductible": false,
+        "personal-deductible": true,
+        "sat-category": "Gastos M\u00e9dicos"
+      },
+      "typical-flow-type": "GASTO",
+      "budget-category": "Healthcare"
+    },
+    "oxxo": {
+      "category": "groceries",
+      "mcc-description": "Grocery Stores, Supermarkets",
+      "merchant-id": "oxxo",
+      "entity-type": "business",
+      "mcc": 5411,
+      "canonical-name": "OXXO",
+      "budget-subcategory": "Groceries",
+      "variations": [
+        "OXXO TAKH BENITO"
+      ],
+      "tax-hints": {
+        "business-deductible": false,
+        "personal-deductible": false
+      },
+      "typical-flow-type": "GASTO",
+      "budget-category": "Living"
+    },
+    "darwin": {
+      "canonical-name": "DARWIN",
+      "category": "transfer",
+      "entity-type": "person",
+      "variations": [
+        "CAUICH BORGES DARWIN MANUEL",
+        "DARWIN"
+      ]
+    },
+    "solution-cancun-storage": {
+      "category": "home",
+      "mcc-description": "Storage Services",
+      "merchant-id": "solution-cancun-storage",
+      "entity-type": "business",
+      "mcc": 6537,
+      "canonical-name": "SOLUTION CANCUN STORAGE",
+      "budget-subcategory": "Household",
+      "variations": [
+        "STORAGE"
+      ],
+      "tax-hints": {
+        "business-deductible": false,
+        "personal-deductible": false
+      },
+      "typical-flow-type": "GASTO",
+      "budget-category": "Home"
+    },
+    "farmacia-paris": {
+      "category": "healthcare",
+      "mcc-description": "Drug Stores and Pharmacies",
+      "merchant-id": "farmacia-paris",
+      "entity-type": "business",
+      "mcc": 5912,
+      "canonical-name": "FARMACIA PARIS",
+      "budget-subcategory": "Pharmacy",
+      "variations": [
+        "FARM PARIS YAXCHILAN A"
+      ],
+      "tax-hints": {
+        "business-deductible": false,
+        "personal-deductible": true,
+        "sat-category": "Gastos M\u00e9dicos"
+      },
+      "typical-flow-type": "GASTO",
+      "budget-category": "Healthcare"
+    },
+    "acuario-cancun": {
+      "category": "entertainment",
+      "mcc-description": "Dance Halls, Studios and Schools",
+      "merchant-id": "acuario-cancun",
+      "entity-type": "business",
+      "mcc": 7911,
+      "canonical-name": "ACUARIO CANCUN",
+      "budget-subcategory": "Recreation",
+      "variations": [
+        "ACUARIO B"
+      ],
+      "tax-hints": {
+        "business-deductible": false,
+        "personal-deductible": false
+      },
+      "typical-flow-type": "GASTO",
+      "budget-category": "Entertainment"
+    },
+    "diana": {
+      "canonical-name": "DIANA",
+      "category": "utilities",
+      "entity-type": "person",
+      "variations": [
+        "DIANA"
+      ]
+    },
+    "tere-cazola": {
+      "category": "restaurants",
+      "mcc-description": "Eating Places, Restaurants",
+      "merchant-id": "tere-cazola",
+      "entity-type": "business",
+      "mcc": 5812,
+      "canonical-name": "TERE CAZOLA",
+      "budget-subcategory": "Dining",
+      "variations": [
+        "MISC TERE CAZOLA HUAYA"
+      ],
+      "tax-hints": {
+        "business-deductible": true,
+        "personal-deductible": false,
+        "condition": "business meals only"
+      },
+      "typical-flow-type": "GASTO",
+      "budget-category": "Living"
+    },
+    "xj-puerto-cancun": {
+      "category": "restaurants",
+      "mcc-description": "Eating Places, Restaurants",
+      "merchant-id": "xj-puerto-cancun",
+      "entity-type": "business",
+      "mcc": 5812,
+      "canonical-name": "XJ PUERTO CANCUN",
+      "budget-subcategory": "Dining",
+      "variations": [
+        "XJ PUERTO CANCUN E"
+      ],
+      "tax-hints": {
+        "business-deductible": true,
+        "personal-deductible": false,
+        "condition": "business meals only"
+      },
+      "typical-flow-type": "GASTO",
+      "budget-category": "Living"
+    },
+    "delphinus": {
+      "category": "entertainment",
+      "mcc-description": "Dance Halls, Studios and Schools",
+      "merchant-id": "delphinus",
+      "entity-type": "business",
+      "mcc": 7911,
+      "canonical-name": "DELPHINUS",
+      "budget-subcategory": "Recreation",
+      "variations": [
+        "DELPHINUS PASE",
+        "DELPHINUS",
+        "DELPHINUS \"Para los efectos del art. 100 de la Ley de Instituciones de Cr\u00e9dito, se hace constar que "
+      ],
+      "tax-hints": {
+        "business-deductible": false,
+        "personal-deductible": false
+      },
+      "typical-flow-type": "GASTO",
+      "budget-category": "Entertainment"
+    },
+    "eugenio": {
+      "canonical-name": "Eugenio",
+      "category": "transfer",
+      "entity-type": "person",
+      "variations": [
+        "\/\/646180177000000000",
+        "\/\/110180000776462410"
+      ]
+    },
+    "seguros-atlas": {
+      "category": "insurance",
+      "mcc-description": "Insurance Sales, Underwriting, and Premiums",
+      "merchant-id": "seguros-atlas",
+      "entity-type": "business",
+      "mcc": 6300,
+      "canonical-name": "Seguros Atlas",
+      "budget-subcategory": "Health & Life",
+      "variations": [
+        "SAT8410245V8",
+        "ATLAS PASEO DE"
+      ],
+      "tax-hints": {
+        "business-deductible": true,
+        "personal-deductible": true,
+        "sat-category": "Gastos M\u00e9dicos"
+      },
+      "typical-flow-type": "GASTO",
+      "budget-category": "Insurance"
+    },
+    "google": {
+      "category": "utilities",
+      "mcc-description": "Computer Software Stores",
+      "merchant-id": "google",
+      "entity-type": "business",
+      "mcc": 5734,
+      "canonical-name": "GOOGLE",
+      "budget-subcategory": "Software & Services",
+      "variations": [
+        "GOOGLE",
+        "GOOGLE GOOGLE"
+      ],
+      "tax-hints": {
+        "business-deductible": true,
+        "personal-deductible": false,
+        "sat-category": "Gastos de Software"
+      },
+      "typical-flow-type": "GASTO",
+      "budget-category": "Technology"
+    },
+    "jeshua": {
+      "canonical-name": "JESHUA",
+      "category": "utilities",
+      "entity-type": "person",
+      "variations": [
+        "JESHUA"
+      ]
+    },
+    "pasion-por-los-helados": {
+      "category": "groceries",
+      "mcc-description": "Grocery Stores, Supermarkets",
+      "merchant-id": "pasion-por-los-helados",
+      "entity-type": "business",
+      "mcc": 5411,
+      "canonical-name": "PASION POR LOS HELADOS",
+      "budget-subcategory": "Groceries",
+      "variations": [
+        "RESTS"
+      ],
+      "tax-hints": {
+        "business-deductible": false,
+        "personal-deductible": false
+      },
+      "typical-flow-type": "GASTO",
+      "budget-category": "Living"
+    },
+    "hanaichi": {
+      "category": "restaurants",
+      "mcc-description": "Eating Places, Restaurants",
+      "merchant-id": "hanaichi",
+      "entity-type": "business",
+      "mcc": 5812,
+      "canonical-name": "HANAICHI",
+      "budget-subcategory": "Dining",
+      "variations": [
+        "REST HANAICHI"
+      ],
+      "tax-hints": {
+        "business-deductible": true,
+        "personal-deductible": false,
+        "condition": "business meals only"
+      },
+      "typical-flow-type": "GASTO",
+      "budget-category": "Living"
+    },
+    "att": {
+      "category": "utilities",
+      "mcc-description": "Telecommunication Services",
+      "merchant-id": "att",
+      "entity-type": "business",
+      "mcc": 4814,
+      "canonical-name": "AT&T",
+      "budget-subcategory": "Internet & Phone",
+      "variations": [
+        "CNM980114PI2"
+      ],
+      "tax-hints": {
+        "business-deductible": true,
+        "personal-deductible": false,
+        "sat-category": "Gastos de Telecomunicaciones"
+      },
+      "typical-flow-type": "GASTO",
+      "budget-category": "Technology"
+    }
+  }
+}

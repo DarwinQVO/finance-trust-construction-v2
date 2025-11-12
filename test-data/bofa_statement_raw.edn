@@ -1,0 +1,120 @@
+;; Bank of America Statement - RAW EXTRACTION
+;; April 10, 2025 to May 8, 2025
+;; Account: 3250 9372 5226
+
+[
+ ;; ============================================================================
+ ;; DEPOSITS (ACH Transfers - NO tienen merchant)
+ ;; ============================================================================
+
+ {:date "04/15/25"
+  :description "WISE US INC DES:Thera Pay ID:Thera Pay INDN:Eugenio Castro Garza CO ID:1453233521 CCD PMT INFO:From Bloom Financial Corp. Via WISE"
+  :amount 2000.00
+  :type :deposit}
+
+ {:date "04/30/25"
+  :description "HubSpot Inc DES:Coupa Pay ID:14949541 INDN:Eugenio Castro Garza CO ID:4272102091 PPD PMT INFO:NTE*OBI*Coupa Pay 286-31598 HubSpot Inc Tmate\\"
+  :amount 5000.00
+  :type :deposit}
+
+ {:date "04/30/25"
+  :description "WISE US INC DES:Thera Pay ID:Thera Pay INDN:Eugenio Castro Garza CO ID:1453233521 CCD PMT INFO:From Bloom Financial Corp. Via WISE"
+  :amount 2000.00
+  :type :deposit}
+
+ ;; ============================================================================
+ ;; CREDIT CARD PAYMENTS (NO tienen merchant - son PAGO_TARJETA)
+ ;; ============================================================================
+
+ {:date "04/23/25"
+  :description "BANK OF AMERICA CREDIT CARD Bill Payment"
+  :amount -843.62
+  :type :withdrawal}
+
+ {:date "04/24/25"
+  :description "Bank of America Credit Card Bill Payment"
+  :amount -174.38
+  :type :withdrawal}
+
+ {:date "04/28/25"
+  :description "Bank of America Credit Card Bill Payment"
+  :amount -5.00
+  :type :withdrawal}
+
+ {:date "04/30/25"
+  :description "Bank of America Credit Card Bill Payment"
+  :amount -183.73
+  :type :withdrawal}
+
+ {:date "05/01/25"
+  :description "APPLECARD GSBANK DES:PAYMENT ID:XXXXXXXXX INDN:Eugenio Castro Garza CO ID:9999999999 WEB"
+  :amount -1835.11
+  :type :withdrawal}
+
+ ;; ============================================================================
+ ;; WIRE TRANSFERS (Wise - NO tienen merchant, son TRASPASO)
+ ;; ============================================================================
+
+ {:date "04/23/25"
+  :description "Wise Inc DES:WISE ID:TrnWise INDN:Eugenio Castro Garza CO ID:9453233521 WEB"
+  :amount -2000.00
+  :type :withdrawal}
+
+ {:date "04/30/25"
+  :description "Wise Inc DES:WISE ID:TrnWise INDN:Eugenio Castro Garza CO ID:9453233521 WEB"
+  :amount -3000.00
+  :type :withdrawal}
+
+ {:date "05/05/25"
+  :description "WISE US INC DES:WISE ID:Shin-April INDN:Eugenio Castro Garza CO ID:1453233521 WEB"
+  :amount -2000.00
+  :type :withdrawal}
+
+ {:date "05/06/25"
+  :description "Wise Inc DES:WISE ID:TrnWise INDN:Eugenio Castro Garza CO ID:9453233521 WEB"
+  :amount -500.00
+  :type :withdrawal}
+
+ {:date "05/08/25"
+  :description "Wise Inc DES:WISE ID:TrnWise INDN:Eugenio Castro Garza CO ID:9453233521 WEB"
+  :amount -300.00
+  :type :withdrawal}
+
+ ;; ============================================================================
+ ;; CARD PURCHASES (SÍ tienen merchant - necesitan extracción)
+ ;; ============================================================================
+
+ {:date "04/14/25"
+  :description "AFFIRM INC DES:AFFIRM PAY ID:3191207 INDN:Eugenio C*Garza CO ID:0000317218 WEB"
+  :amount -96.75
+  :type :withdrawal
+  :note "Buy now pay later - payment processor"}
+
+ {:date "05/02/25"
+  :description "CHECKCARD 0501 SLACK T04HFBU1QF4 DUBLIN 74609055121100020118218 RECURRING"
+  :amount -10.15
+  :type :withdrawal
+  :note "Subscription - SaaS tool"}
+
+ {:date "05/02/25"
+  :description "CHECKCARD 0502 UBER* ONE UBER.COM/MX/E 74048925122100001169091"
+  :amount -3.57
+  :type :withdrawal
+  :note "Uber subscription - NOT a ride"}
+
+ {:date "05/08/25"
+  :description "CHECKCARD 0507 X CORP. PAID FEATURES ABOUT.X.COM TX 24011345127100113701215 RECURRING"
+  :amount -41.29
+  :type :withdrawal
+  :note "Twitter/X paid subscription"}
+
+ ;; ============================================================================
+ ;; SERVICE FEES
+ ;; ============================================================================
+
+ {:date "05/02/25"
+  :description "CHECKCARD 0502 UBER* ONE UBER.COM/MX/E 74048925122100001169091 INTERNATIONAL TRANSACTION FEE"
+  :amount -0.11
+  :type :fee
+  :note "Bank fee - not a merchant transaction"}
+]

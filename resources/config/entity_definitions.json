@@ -1,0 +1,128 @@
+{
+  "_comment": "Entity Type Definitions - Add new entities WITHOUT touching code!",
+  "_schema_version": "1.0",
+  "_last_updated": "2025-11-12",
+
+  "entity-types": [
+    {
+      "id": "merchant",
+      "display-name": "Merchant",
+      "description": "Business or person receiving payment",
+      "icon": "🏪",
+      "registry-file": "resources/registry/merchant_registry.json",
+      "registry-key": "merchants",
+      "extraction": {
+        "source-field": "clean-merchant",
+        "fallback-field": null
+      },
+      "output-fields": [
+        {"key": "entity-type", "from": "entity-type"},
+        {"key": "merchant-category", "from": "category"},
+        {"key": "budget-category", "from": "budget-category"},
+        {"key": "mcc", "from": "mcc"}
+      ],
+      "enabled": true,
+      "priority": 1
+    },
+    {
+      "id": "bank",
+      "display-name": "Bank",
+      "description": "Financial institution processing the transaction",
+      "icon": "🏦",
+      "registry-file": "resources/registry/bank_registry.json",
+      "registry-key": "banks",
+      "extraction": {
+        "source-field": "bank",
+        "fallback-field": null,
+        "extractor-fn": "extract-bank-from-pdf-source",
+        "extractor-params": ["pdf-source"]
+      },
+      "output-fields": [
+        {"key": "bank-type", "from": "bank-type"},
+        {"key": "bank-country", "from": "country"},
+        {"key": "bank-currency", "from": "currency"},
+        {"key": "default-payment-method", "from": "default-payment-method"},
+        {"key": "payment-network", "from": "canonical-name"}
+      ],
+      "enabled": true,
+      "priority": 2
+    },
+    {
+      "id": "account",
+      "display-name": "Account",
+      "description": "Bank account used for the transaction",
+      "icon": "💳",
+      "registry-file": "resources/registry/account_registry.json",
+      "registry-key": "accounts",
+      "extraction": {
+        "source-field": "account-name",
+        "fallback-field": null,
+        "derivation": {
+          "template": "{bank-canonical} Checking",
+          "required-fields": ["bank-canonical"]
+        }
+      },
+      "output-fields": [
+        {"key": "account-type", "from": "account-type"},
+        {"key": "account-currency", "from": "currency"},
+        {"key": "payment-method", "from": "payment-method"},
+        {"key": "payment-network-account", "from": "payment-network"}
+      ],
+      "enabled": true,
+      "priority": 3
+    },
+    {
+      "id": "category",
+      "display-name": "Category",
+      "description": "Transaction category for budgeting and tax purposes",
+      "icon": "📁",
+      "registry-file": "resources/registry/category_registry.json",
+      "registry-key": "categories",
+      "extraction": {
+        "source-field": "merchant-category",
+        "fallback-field": null
+      },
+      "output-fields": [
+        {"key": "category-icon", "from": "icon"},
+        {"key": "budget-category", "from": "budget-category"},
+        {"key": "budget-subcategory", "from": "budget-subcategory"},
+        {"key": "parent-category", "from": "parent-category"},
+        {"key": "typical-tax-treatment", "from": "typical-tax-treatment"},
+        {"key": "typical-flow-type", "from": "typical-flow-type"}
+      ],
+      "enabled": true,
+      "priority": 4
+    }
+  ],
+
+  "_instructions": {
+    "how_to_add_entity": [
+      "1. Create new registry JSON file (e.g., resources/registry/payee_registry.json)",
+      "2. Add new entity definition to this file's 'entity-types' array",
+      "3. Set appropriate priority (higher number = resolved later)",
+      "4. Configure extraction (source-field, extractor-fn, or derivation)",
+      "5. Specify output-fields to copy from entity to transaction",
+      "6. Set enabled: true",
+      "7. Restart server (or call reload-entity-definitions! in REPL)",
+      "8. Done! No code changes needed."
+    ],
+    "example_new_entity": {
+      "id": "payee",
+      "display-name": "Payee",
+      "description": "Person or business receiving money",
+      "icon": "👤",
+      "registry-file": "resources/registry/payee_registry.json",
+      "registry-key": "payees",
+      "extraction": {
+        "source-field": "beneficiary-name",
+        "fallback-field": "description"
+      },
+      "output-fields": [
+        {"key": "payee-type", "from": "entity-type"},
+        {"key": "payee-relationship", "from": "relationship"}
+      ],
+      "enabled": true,
+      "priority": 5
+    }
+  }
+}

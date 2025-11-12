@@ -1,0 +1,236 @@
+;; ============================================================================
+;; Stage 4: Merchant Disambiguation Rules
+;; ============================================================================
+
+{:disambiguation-rules
+ {;; ============================================================================
+  ;; GOOGLE Services (Multiple products/services)
+  ;; ============================================================================
+
+  :google-youtube
+  {:patterns ["GOOGLE YOUTUBEPREMIUM" "GOOGLE YOUTUBE" "YOUTUBE PREMIUM"]
+   :merchant-id :google-youtube-premium
+   :canonical-name "Google YouTube Premium"
+   :category :entertainment-subscriptions
+   :confidence 0.95}
+
+  :google-one
+  {:patterns ["GOOGLE ONE" "GOOGLEONE"]
+   :merchant-id :google-one
+   :canonical-name "Google One"
+   :category :cloud-storage-subscriptions
+   :confidence 0.95}
+
+  :google-cloud
+  {:patterns ["GOOGLE CLOUD" "GOOGLE CLOUDS" "GCP"]
+   :merchant-id :google-cloud-platform
+   :canonical-name "Google Cloud Platform"
+   :category :business-cloud-services
+   :confidence 0.95}
+
+  :google-play
+  {:patterns ["GOOGLE PLAY" "GOOGLEPLAY"]
+   :merchant-id :google-play-store
+   :canonical-name "Google Play Store"
+   :category :digital-goods
+   :confidence 0.90}
+
+  :google-ads
+  {:patterns ["GOOGLE ADS" "GOOGLEADS"]
+   :merchant-id :google-ads
+   :canonical-name "Google Ads"
+   :category :business-advertising
+   :confidence 0.95}
+
+  :google-generic
+  {:patterns ["GOOGLE"]
+   :merchant-id :google-unspecified
+   :canonical-name "Google (Unspecified)"
+   :category :technology-services
+   :confidence 0.50}
+
+  ;; ============================================================================
+  ;; UBER Services (Rides vs Eats)
+  ;; ============================================================================
+
+  :uber-eats
+  {:patterns ["UBER EATS" "UBEREATS" "UBER *EATS"]
+   :merchant-id :uber-eats
+   :canonical-name "Uber Eats"
+   :category :food-delivery
+   :confidence 0.95}
+
+  :uber-rides
+  {:patterns ["UBER TRIP" "UBER RIDE" "UBER BV"]
+   :merchant-id :uber-rides
+   :canonical-name "Uber Rides"
+   :category :transportation
+   :confidence 0.95}
+
+  :uber-generic
+  {:patterns ["UBER"]
+   :merchant-id :uber-unspecified
+   :canonical-name "Uber (Unspecified)"
+   :category :transportation
+   :confidence 0.60}
+
+  ;; ============================================================================
+  ;; AMAZON Services (Retail vs Web Services)
+  ;; ============================================================================
+
+  :amazon-aws
+  {:patterns ["AMAZON WEB SERVICES" "AWS" "AMAZON AWS"]
+   :merchant-id :amazon-web-services
+   :canonical-name "Amazon Web Services"
+   :category :business-cloud-services
+   :confidence 0.95}
+
+  :amazon-prime
+  {:patterns ["AMAZON PRIME" "AMZN PRIME"]
+   :merchant-id :amazon-prime
+   :canonical-name "Amazon Prime"
+   :category :entertainment-subscriptions
+   :confidence 0.95}
+
+  :amazon-retail
+  {:patterns ["AMAZON.COM" "AMAZON.MX" "AMAZON MARKETPLACE"]
+   :merchant-id :amazon-retail
+   :canonical-name "Amazon Retail"
+   :category :online-shopping
+   :confidence 0.90}
+
+  :amazon-generic
+  {:patterns ["AMAZON" "AMZN"]
+   :merchant-id :amazon-unspecified
+   :canonical-name "Amazon (Unspecified)"
+   :category :online-shopping
+   :confidence 0.50}
+
+  ;; ============================================================================
+  ;; STARBUCKS (Location variations)
+  ;; ============================================================================
+
+  :starbucks
+  {:patterns ["STARBUCKS" "SBUX"]
+   :merchant-id :starbucks
+   :canonical-name "Starbucks"
+   :category :cafes-coffee-shops
+   :confidence 0.95}
+
+  ;; ============================================================================
+  ;; NETFLIX (Streaming service)
+  ;; ============================================================================
+
+  :netflix
+  {:patterns ["NETFLIX" "NFLX"]
+   :merchant-id :netflix
+   :canonical-name "Netflix"
+   :category :entertainment-subscriptions
+   :confidence 0.95}
+
+  ;; ============================================================================
+  ;; AIRBNB (Travel/accommodation)
+  ;; ============================================================================
+
+  :airbnb
+  {:patterns ["AIRBNB" "AIR BNB"]
+   :merchant-id :airbnb
+   :canonical-name "Airbnb"
+   :category :travel-accommodation
+   :confidence 0.95}
+
+  ;; ============================================================================
+  ;; PAYPAL (Payment processor)
+  ;; ============================================================================
+
+  :paypal
+  {:patterns ["PAYPAL" "PP"]
+   :merchant-id :paypal
+   :canonical-name "PayPal"
+   :category :payment-processing
+   :confidence 0.90}
+
+  ;; ============================================================================
+  ;; SPOTIFY (Music streaming)
+  ;; ============================================================================
+
+  :spotify
+  {:patterns ["SPOTIFY"]
+   :merchant-id :spotify
+   :canonical-name "Spotify"
+   :category :entertainment-subscriptions
+   :confidence 0.95}
+
+  ;; ============================================================================
+  ;; APPLE Services (Multiple products)
+  ;; ============================================================================
+
+  :apple-icloud
+  {:patterns ["APPLE ICLOUD" "ICLOUD"]
+   :merchant-id :apple-icloud
+   :canonical-name "Apple iCloud"
+   :category :cloud-storage-subscriptions
+   :confidence 0.95}
+
+  :apple-music
+  {:patterns ["APPLE MUSIC"]
+   :merchant-id :apple-music
+   :canonical-name "Apple Music"
+   :category :entertainment-subscriptions
+   :confidence 0.95}
+
+  :apple-tv
+  {:patterns ["APPLE TV" "APPLETV"]
+   :merchant-id :apple-tv-plus
+   :canonical-name "Apple TV+"
+   :category :entertainment-subscriptions
+   :confidence 0.95}
+
+  :apple-store
+  {:patterns ["APPLE STORE" "APPLE.COM"]
+   :merchant-id :apple-retail
+   :canonical-name "Apple Store"
+   :category :electronics-retail
+   :confidence 0.90}
+
+  :apple-generic
+  {:patterns ["APPLE"]
+   :merchant-id :apple-unspecified
+   :canonical-name "Apple (Unspecified)"
+   :category :technology-services
+   :confidence 0.50}
+
+  ;; ============================================================================
+  ;; MICROSOFT Services
+  ;; ============================================================================
+
+  :microsoft-365
+  {:patterns ["MICROSOFT 365" "MS 365" "OFFICE 365"]
+   :merchant-id :microsoft-365
+   :canonical-name "Microsoft 365"
+   :category :business-productivity
+   :confidence 0.95}
+
+  :microsoft-azure
+  {:patterns ["MICROSOFT AZURE" "AZURE"]
+   :merchant-id :microsoft-azure
+   :canonical-name "Microsoft Azure"
+   :category :business-cloud-services
+   :confidence 0.95}
+
+  :microsoft-generic
+  {:patterns ["MICROSOFT" "MS"]
+   :merchant-id :microsoft-unspecified
+   :canonical-name "Microsoft (Unspecified)"
+   :category :technology-services
+   :confidence 0.50}}
+
+ ;; ============================================================================
+ ;; Matching Configuration
+ ;; ============================================================================
+
+ :matching-config
+ {:case-sensitive? false
+  :match-strategy :longest-first
+  :min-confidence 0.50
+  :fallback-category :uncategorized}}
